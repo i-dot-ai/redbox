@@ -5,10 +5,10 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
-from redbox_core.views.api_views import rate_chat_message
 
-from .redbox_core import views
-from .redbox_core.views import api_views
+from redbox_app.redbox_core import views
+from redbox_app.redbox_core.views import api_views
+from redbox_app.redbox_core.views.api_views import rate_chat_message
 
 admin.site = AdminSitePlus()
 admin.autodiscover()

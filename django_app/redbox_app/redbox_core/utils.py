@@ -21,3 +21,13 @@ def sanitise_string(string: str | None) -> str | None:
     """We are seeing NUL (0x00) characters in user entered fields, and also in document citations.
     We can't save these characters, so we need to sanitise them."""
     return string.replace("\x00", "\ufffd") if string else string
+
+
+def sanitize_json(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return list(map(sanitize_json, obj))
+    if isinstance(obj, str):
+        return sanitize_json(obj)
+    return obj
