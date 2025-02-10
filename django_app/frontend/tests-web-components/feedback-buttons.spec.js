@@ -12,4 +12,10 @@ test(`Individual message feedback can be entered`, async ({ page }) => {
   await page.locator('[data-rating="3"]').click();
   await expect(page.getByText("Thanks for the feedback")).toBeVisible();
 
+  // The message ID is passed to the component (both for CSR and SSR)
+  const messageIdCSR = await page.locator('feedback-buttons').getAttribute("data-id");
+  await page.reload();
+  const messageIdSSR = await page.locator('feedback-buttons').getAttribute("data-id");
+  expect(messageIdCSR).toEqual(messageIdSSR);
+
 });
