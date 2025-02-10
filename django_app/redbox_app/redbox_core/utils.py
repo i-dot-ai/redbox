@@ -29,5 +29,5 @@ def sanitize_json(obj):
     if isinstance(obj, list):
         return list(map(sanitize_json, obj))
     if isinstance(obj, str):
-        return sanitize_json(obj)
+        return sanitise_string(obj)
     return obj
