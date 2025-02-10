@@ -171,6 +171,14 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _("Crown Commercial Service")
         CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _("CS Modernisation and Reform Unit")
         DELIVERY_GROUP = "Delivery Group", _("Delivery Group")
+        DSIT_DATA_SCIENCE_AND_TRANSFORMATION = (
+            "DSIT Data Science & Data Transformation",
+            _("DSIT Data Science & Data Transformation"),
+        )
+        DSIT_MEDIA_AND_DIGITAL = "DSIT Media & Digital", _("DSIT Media & Digital")
+        DSIT_STRATEGIC_ENGAGEMENT = "DSIT Strategic Engagement", _("DSIT Strategic Engagement")
+        DSIT_STRATEGY_PLANNING_INSIGHTS = "DSIT Strategy, Planning & Insights", _("DSIT Strategy, Planning & Insights")
+        DSIT_TRANSFORMATION = "DSIT Transformation", _("DSIT Transformation")
         ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
         EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
             "Equality and Human Rights Commission",
