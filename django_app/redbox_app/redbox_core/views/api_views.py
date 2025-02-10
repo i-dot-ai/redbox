@@ -48,7 +48,7 @@ class RatingSerializer(Serializer):
 
     def to_internal_value(self, data):
         data = sanitize_json(data)
-        return super().__init__(data)
+        return super().to_internal_value(data)
 
     class Meta:
         fields = "__all__"
