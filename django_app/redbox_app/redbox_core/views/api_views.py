@@ -91,7 +91,7 @@ class ChatMessageView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            chat = get_chat_session(chat_id=chat_id, user=request.user, data=serializer.validated_data)
+            chat, _delay = get_chat_session(chat_id=chat_id, user=request.user, data=serializer.validated_data)
         except ValueError as e:
             return Response({"non_field_errors": e.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
