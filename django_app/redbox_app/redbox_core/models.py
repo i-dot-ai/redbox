@@ -220,6 +220,17 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         PUBLIC_SECTOR_FRAUD_AUTHORITY = "Public Sector Fraud Authority", _("Public Sector Fraud Authority")
         UKSV = "UKSV", _("UKSV")
         UNION_AND_CONSTITUTION_GROUP = "Union and Constitution Group", _("Union and Constitution Group")
+
+        # DSIT
+        DSIT_STRATEGY_PLANNING_INSIGHTS = "DSIT Strategy, Planning & Insights", _("DSIT Strategy, Planning & Insights")
+        DSIT_TRANSFORMATION = "DSIT Transformation", _("DSIT Transformation")
+        DSIT_DATA_SCIENCE_AND_TRANSFORMATION = (
+            "DSIT Data Science & Data Transformation",
+            _("DSIT Data Science & Data Transformation"),
+        )
+        DSIT_MEDIA_AND_DIGITAL = "DSIT Media & Digital", _("DSIT Media & Digital")
+        DSIT_STRATEGIC_ENGAGEMENT = "DSIT Strategic Engagement", _("DSIT Strategic Engagement")
+
         OTHER = "Other", _("Other")
 
     class AIExperienceLevel(models.TextChoices):
