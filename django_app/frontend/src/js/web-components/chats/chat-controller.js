@@ -57,6 +57,13 @@ class ChatController extends HTMLElement {
             </ul>
           </details>
         `);
+        (() => {
+          let plausible = /** @type {any} */ (window).plausible;
+          if (typeof plausible === "undefined") {
+            return;
+          }
+          plausible("Token limit message shown");
+        })();
         return;
       }
 

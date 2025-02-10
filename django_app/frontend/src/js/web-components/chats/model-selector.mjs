@@ -70,6 +70,16 @@ export class ModelSelector extends RedboxElement {
     this.selectedOption = parseInt(option.dataset.index);
     this.activeOption = this.selectedOption;
     this.expanded = false;
+    (() => {
+      let plausible = /** @type {any} */ (window).plausible;
+      if (typeof plausible === "undefined") {
+        return;
+      }
+      plausible("Model changed", { props: { model: this.options[this.selectedOption].name } });
+      if (document.querySelectorAll(".rb-token-sizes").length > 0) {
+        plausible("Model changed following token limit message");
+      }
+    })();
   }
 
   #selectOptionByLetter(letter) {

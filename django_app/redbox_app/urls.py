@@ -6,8 +6,9 @@ from django.urls import include, path
 from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
 
-from .redbox_core import views
-from .redbox_core.views import api_views
+from redbox_app.redbox_core import views
+from redbox_app.redbox_core.views import api_views
+from redbox_app.redbox_core.views.api_views import rate_chat_message
 
 admin.site = AdminSitePlus()
 admin.autodiscover()
@@ -50,8 +51,8 @@ chat_urlpatterns = [
     path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
     path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
     path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
+    path("ratings/<uuid:message_id>/", rate_chat_message, name="ratings"),
     path("chats/<uuid:chat_id>/message", views.ChatMessageView.as_view(), name="chat-message"),
-    path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
 ]
 
 admin_urlpatterns = [
