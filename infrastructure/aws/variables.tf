@@ -249,3 +249,10 @@ variable "google_api_key" {
   default = null
   description = "api key for google api"
 }
+
+variable "google_project_id" {
+  type = string
+  sensitive = true
+  default = null
+  description = "google project id that exposes vertex-ai"
+}
