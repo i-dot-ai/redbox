@@ -1,3 +1,4 @@
+import os
 from logging import getLogger
 
 from langchain.chat_models import init_chat_model
@@ -20,10 +21,17 @@ class Redbox:
 
     def _get_runnable(self, state: RedboxState):
         settings = get_settings()
-        llm = init_chat_model(
-            model=state.chat_backend.name,
-            model_provider=state.chat_backend.provider,
-        )
+        if state.chat_backend.provider == "google_vertexai":
+            llm = init_chat_model(
+                model=state.chat_backend.name,
+                model_provider=state.chat_backend.provider,
+                api_key=os.environ["GOOGLE_API_KEY"]
+            )
+        else:
+            llm = init_chat_model(
+                model=state.chat_backend.name,
+                model_provider=state.chat_backend.provider,
+            )
         input_state = state.model_dump()
         messages = (
             [settings.system_prompt_template]

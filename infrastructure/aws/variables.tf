@@ -242,3 +242,9 @@ variable "allowed_email_domains" {
   default     = ".gov.uk"
   description = "comma separated list of email domains"
 }
+
+variable "google_api_key" {
+  type = string
+  sensitive = true
+  description = "api key for google api"
+}

@@ -48,6 +48,7 @@ locals {
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
+    "GOOGLE_API_KEY": var.google_api_key
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
