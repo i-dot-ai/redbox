@@ -246,5 +246,6 @@ variable "allowed_email_domains" {
 variable "google_api_key" {
   type = string
   sensitive = true
+  default = null
   description = "api key for google api"
 }
