@@ -52,6 +52,7 @@ chat_urlpatterns = [
     path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
     path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
     path("ratings/<uuid:message_id>/", rate_chat_message, name="ratings"),
+    path("chats/<uuid:chat_id>/message", views.ChatMessageView.as_view(), name="chat-message"),
 ]
 
 admin_urlpatterns = [

@@ -1,3 +1,4 @@
+from redbox_app.redbox_core.views.api_views import ChatMessageView
 from redbox_app.redbox_core.views.auth_views import sign_in_link_sent_view, sign_in_view, signed_out_view
 from redbox_app.redbox_core.views.chat_views import (
     ChatsTitleView,
@@ -21,6 +22,7 @@ from redbox_app.redbox_core.views.misc_views import SecurityTxtRedirectView, hea
 from redbox_app.redbox_core.views.signup_views import Signup1, Signup2, Signup3, Signup4
 
 __all__ = [
+    "ChatMessageView",
     "ChatsTitleView",
     "ChatsView",
     "ChatsViewNew",

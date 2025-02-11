@@ -98,9 +98,6 @@
 
           </div>
 
-          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
-          {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
-
         </chat-controller>
 
       </div>
@@ -117,7 +114,10 @@
       {% endset %}
       {{ document_upload | render_lit }}
 
-      <form class="rb-chat-input" id="message-form" action="/post-message/" method="post">
+      <form class="rb-chat-input" id="message-form" action="message" method="post">
+
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"/>
+        {% if chat_id %}<input type="hidden" name="session-id" value="{{ chat_id }}"/>{% endif %}
 
         <div class="rb-chat-input__container rb-chat-input__container--top">
           <div class="rb-chat-input__input-container">

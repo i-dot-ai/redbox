@@ -183,6 +183,7 @@ async def test_chat_consumer_with_selected_files(
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_files.user
+        communicator.scope["url_route"] = {"kwargs": {"chat_id": chat_with_files.id}}
         connected, _ = await communicator.connect()
         assert connected
 
@@ -211,7 +212,7 @@ async def test_chat_consumer_with_selected_files(
                 {"role": "ai", "text": "A second answer."},
                 {"role": "user", "text": "Third question, with selected files?"},
             ],
-            "selected_files": [x.id for x in selected_files],
+            "selected_files": [str(x.id) for x in selected_files],
             "chat_backend": llm_backend,
         }
     )
