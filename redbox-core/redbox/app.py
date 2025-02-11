@@ -25,7 +25,7 @@ class Redbox:
             llm = init_chat_model(
                 model=state.chat_backend.name,
                 model_provider=state.chat_backend.provider,
-                api_key=os.environ["GOOGLE_API_KEY"]
+                api_key=os.environ["GOOGLE_API_KEY"],
             )
         else:
             llm = init_chat_model(
