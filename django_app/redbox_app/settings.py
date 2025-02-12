@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-import json
 import logging
 import os
 import socket
@@ -402,4 +401,4 @@ if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
     file_path = Path.home() / "google-application-credentials"
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(file_path)
     with Path.open(file_path, "w") as f:
-        f.write(json.loads(credentials))
+        f.write(credentials)
