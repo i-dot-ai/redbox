@@ -243,16 +243,10 @@ variable "allowed_email_domains" {
   description = "comma separated list of email domains"
 }
 
-variable "google_api_key" {
-  type = string
-  sensitive = true
-  default = null
-  description = "api key for google api"
-}
 
-variable "google_project_id" {
+variable "google_application_credentials_json" {
   type = string
   sensitive = true
   default = null
-  description = "google project id that exposes vertex-ai"
+  description = "google application credentials for vertex-ai"
 }
