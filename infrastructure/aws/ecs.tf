@@ -60,7 +60,7 @@ resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
 module "django-app" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                    = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                     = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  source                     = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.1-ecs"
   memory                     = 4096
   cpu                        = 2048
   create_listener            = true
@@ -78,19 +78,19 @@ module "django-app" {
     accepted_response   = "200"
     path                = "/health/"
     timeout             = 5
+    port                = 8090
   }
-  state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   container_port               = 8090
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
   host                         = local.django_host
-  ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
+  certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
 }
 
 
@@ -99,8 +99,8 @@ module "django-app" {
 module "worker" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
-  command                      = ["venv/bin/django-admin", "qcluster"]
+  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.1-ecs"
+  command = ["venv/bin/django-admin", "qcluster"]
   memory                       = 6144
   cpu                          = 2048
   create_listener              = false
@@ -112,55 +112,54 @@ module "worker" {
   ecs_cluster_name             = module.cluster.ecs_cluster_name
   autoscaling_minimum_target   = 1
   autoscaling_maximum_target   = 1
-  state_bucket                 = var.state_bucket
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   container_port               = 5000
   load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
   aws_lb_arn                   = module.load_balancer.alb_arn
-  ip_whitelist                 = var.external_ips
   environment_variables        = local.django_app_environment_variables
   secrets                      = local.reconstructed_django_secrets
   http_healthcheck             = false
   ephemeral_storage            = 30
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
+  certificate_arn              = data.terraform_remote_state.universal.outputs.certificate_arn
 }
 
 
 module "lit-ssr" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
-  source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v1.0.0-ecs"
+  source                        = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.1-ecs"
   service_discovery_service_arn = aws_service_discovery_service.lit_ssr_service_discovery_service.arn
-  memory                       = 6144
-  cpu                          = 2048
-  create_listener              = false
-  create_networking            = false
-  name                         = "${local.name}-lit-ssr"
-  image_tag                    = var.image_tag
-  ecr_repository_uri           = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
-  ecs_cluster_id               = module.cluster.ecs_cluster_id
-  ecs_cluster_name             = module.cluster.ecs_cluster_name
-  autoscaling_minimum_target   = 1
-  autoscaling_maximum_target   = 1
-  state_bucket                 = var.state_bucket
-  vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
-  private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
-  container_port               = 3002
-  load_balancer_security_group = module.load_balancer.load_balancer_security_group_id
-  aws_lb_arn                   = module.load_balancer.alb_arn
-  ip_whitelist                 = var.external_ips
+  memory                        = 6144
+  cpu                           = 2048
+  create_listener               = false
+  create_networking             = false
+  name                          = "${local.name}-lit-ssr"
+  image_tag                     = var.image_tag
+  ecr_repository_uri            = "${var.ecr_repository_uri}/${var.project_name}-lit-ssr"
+  ecs_cluster_id                = module.cluster.ecs_cluster_id
+  ecs_cluster_name              = module.cluster.ecs_cluster_name
+  autoscaling_minimum_target    = 1
+  autoscaling_maximum_target    = 1
+  vpc_id                        = data.terraform_remote_state.vpc.outputs.vpc_id
+  private_subnets               = data.terraform_remote_state.vpc.outputs.private_subnets
+  container_port                = 3002
+  load_balancer_security_group  = module.load_balancer.load_balancer_security_group_id
+  aws_lb_arn                    = module.load_balancer.alb_arn
   health_check = {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     accepted_response   = "200"
     path                = "/health"
     timeout             = 5
+    port                = 3002
   }
-  ephemeral_storage            = 21
-  auto_scale_off_peak_times    = true
-  wait_for_ready_state         = true
+  ephemeral_storage         = 21
+  auto_scale_off_peak_times = true
+  wait_for_ready_state      = true
+  certificate_arn           = data.terraform_remote_state.universal.outputs.certificate_arn
 }
 
 
