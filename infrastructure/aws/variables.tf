@@ -242,3 +242,11 @@ variable "allowed_email_domains" {
   default     = ".gov.uk"
   description = "comma separated list of email domains"
 }
+
+
+variable "google_application_credentials_json" {
+  type = string
+  sensitive = true
+  default = null
+  description = "google application credentials for vertex-ai"
+}

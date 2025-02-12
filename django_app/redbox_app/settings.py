@@ -395,3 +395,10 @@ MESSAGE_THROTTLE_SECONDS_MAX = env.int("MESSAGE_THROTTLE_SECONDS_MAX", 10)
 MESSAGE_THROTTLE_RATE = env.float("MESSAGE_THROTTLE_RATE", 0.1)
 
 ALLOWED_EMAIL_DOMAINS = [domain.strip() for domain in env.str("ALLOWED_EMAIL_DOMAINS", ".gov.uk").split(",")]
+
+
+if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
+    file_path = Path.home() / "google-application-credentials"
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(file_path)
+    with Path.open(file_path, "w") as f:
+        f.write(credentials)

@@ -16,6 +16,7 @@ class ChatLLMBackendAdmin(admin.ModelAdmin):
         "name",
         "provider",
         "is_default",
+        "enabled",
     ]
 
     class Meta:
