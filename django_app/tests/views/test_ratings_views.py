@@ -21,14 +21,14 @@ def test_post_new_rating_only(alice: User, chat_message: ChatMessage, client: Cl
 
     # When
     url = reverse("ratings", kwargs={"message_id": chat_message.id})
-    response = client.post(url, json.dumps({"rating": 5}), content_type="application/json")
+    response = client.post(url, json.dumps({"rating": 5, "text": ""}), content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)
     assert status.is_success
     chat_message.refresh_from_db()
     assert chat_message.rating == 5
-    assert chat_message.rating_text is None
+    assert chat_message.rating_text == ""
     assert chat_message.rating_chips == []
 
 
@@ -52,6 +52,30 @@ def test_post_new_rating(alice: User, chat_message: ChatMessage, client: Client)
     assert chat_message.rating == 5
     assert chat_message.rating_text == "Lorem Ipsum."
     assert set(chat_message.rating_chips) == {"speed", "accuracy", "swearing"}
+
+
+@pytest.mark.django_db()
+def test_post_invalid_rating(alice: User, chat_message: ChatMessage, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("ratings", kwargs={"message_id": chat_message.id})
+    response = client.post(
+        url,
+        json.dumps({"rating": 3.4, "text": [42], "chips": {"speed": "accuracy"}}),
+        content_type="application/json",
+    )
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert not status.is_success
+    chat_message.refresh_from_db()
+    assert response.json() == {
+        "chips": ['Expected a list of items but got type "dict".'],
+        "rating": ["A valid integer is required."],
+        "text": ["Not a valid string."],
+    }
 
 
 @pytest.mark.django_db()

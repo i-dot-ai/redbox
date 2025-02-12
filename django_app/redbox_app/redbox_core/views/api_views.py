@@ -48,7 +48,7 @@ def file_upload(request):
 
 class RatingSerializer(Serializer):
     rating = IntegerField()
-    text = CharField(required=False)
+    text = CharField(required=False, allow_blank=True)
     chips = ListField(child=CharField(), required=False)
 
     def to_internal_value(self, data):
@@ -63,7 +63,8 @@ class RatingSerializer(Serializer):
 @permission_classes([IsAuthenticated])
 def rate_chat_message(request, message_id: UUID):
     serializer = RatingSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=HTTPStatus.BAD_REQUEST)
 
     logger.info("getting chat-message with id=%s", message_id)
 
