@@ -1,75 +1,107 @@
 {% extends "base.html" %}
 
-{% set pageTitle = "Privacy notice" %}
+{% set pageTitle = "Privacy policy" %}
 
-{% if waffle_flag(request, "uktrade") %}
-  {% set departmental_owner = "Department for Business and Trade" %}
-  {% set department_address = "Department for Business and Trade, Old Admiralty Building, Admiralty Place, London, SW1A 2DY" %}
-  {% set last_updated = "21st June 2024" %}
-{% else %}
-  {% set departmental_owner = "Cabinet Office" %}
-  {% set department_address = "Cabinet Office, 70 Whitehall, London, SW1A 2AS, or 0207 276 1234, or <a href='mailto:publiccorrespondence@cabinetoffice.gov.uk' class='govuk-link'>publiccorrespondence@cabinetoffice.gov.uk</a>" %}
-  {% set last_updated = "16th April 2024" %}
-{% endif %}
+{% set departmental_owner = "DSIT" %}
+{% set department_address = "DSIT Data Protection Officer, Department for Science, Innovation & Technology, 22-26 Whitehall, London, SW1A 2EG, Email <a href='mailto:dataprotection@dsit.gov.uk' class='govuk-link'>dataprotection@dsit.gov.uk</a>" %}
+{% set last_updated = "13th February 2025" %}
 
 {% block content %}
 
 <div class="govuk-width-container iai-grid">
   <div class="iai-grid__start-3-span-8">
 
-    <h1 class="govuk-heading-l">Privacy notice for Redbox</h1>
+    <h1 class="govuk-heading-l">Redbox privacy policy</h1>
     <div class="govuk-body">
       <p class="govuk-body-l">This notice sets out how we will use your personal data, and your rights. It is made under Articles 13 and/or 14 of the UK General Data Protection Regulation (UK GDPR).</p>
+
+      <h2 class="govuk-heading-m">Data Controller</h2>
+      <p class="govuk-body">The Department for Science and Innovation (DSIT) is the controller and is responsible for the processing of your Personal Data as described in this Privacy Policy.</p>
 
       <h2 class="govuk-heading-m">Your data</h2>
       <h3 class="govuk-heading-s">Purpose</h3>
       <p class="govuk-body">The purposes for which we are processing your personal data are:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>enabling login to the platform</li>
-        <li>information will be aggregated and used for anonymous further analysis</li>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>Enabling login to the platform</li>
+        <li>Information will be aggregated and used for anonymous further analysis</li>
+        <li>To contact you to take part in research into how to improve the service if you have opted in to research in the Redbox Terms and Conditions</li>
+        <li>To contact you when maintenance, changes to terms or other changes are being made that may affect your use of Redbox</li>
       </ul>
 
       <h3 class="govuk-heading-s">The data</h3>
+      <h4 class="govuk-heading-xs">Personal data you provide</h4>
       <p class="govuk-body">We will process the following personal data:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>organisational email address</li>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>
+          Information gathered at Signup
+          <ul>
+            <li>work email address</li>
+            <li>grade</li>
+            <li>profession</li>
+            <li>business unit</li>
+            <li>department</li>
+          </ul>
+        </li>
+        <li>As stipulated in the Terms and Conditions the use of personal data is not permitted as part of any user input into Redbox, either in content loaded or through chat. However; there is no way with current technology to prevent if personal data is inputted into Redbox through content or chat (this is further laid out in the Retention section of this Policy, it will be deleted after 30 days.)</li>
+        <li>The Content (both Inputs and Outputs) may be referred to for research purposes</li>
       </ul>
+      <h4 class="govuk-heading-xs">Personal Data We Receive from Your Use of the Services</h4>
+      <p class="govuk-body">When you visit, use, or interact with the Services, we receive the following information about your visit, use, or interactions:</p>
+      <p class="govuk-body">Via <a class="govuk-link" href="https://plausible.io/privacy-focused-web-analytics">Plausible Analytics</a> the following information is gathered:</p>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>Browser type and settings</li>
+        <li>Device information</li>
+        <li>Page URL</li>
+        <li>HTTP Referrer</li>
+        <li>Operating system</li>
+        <li>Country, region</li>
+        <li>Internet Protocol (IP) address</li>
+      </ul>
+      <p class="govuk-body">Plausible Analytics collects anonymous analytics data about user use of Redbox. IP address is collected but mixed with other data to disguise individual identity. Analytics data is wiped at the end of each day so no history is retained about an individual’s use of Redbox. You can view <a class="govuk-link" href="https://plausible.io/data-policy">more information on how Plausible uses this data</a>. </p>
+      <p class="govuk-body">“Essential cookies” are captured as they are required for essential functionality and security. Please read our <a class="govuk-link" href="{{ url('cookies') }}">cookies notice</a> for further information</p>
+      <p class="govuk-body">If you change role or department you can tell the product team for your details to be changed to keep them up to date.</p>
+
 
       <h3 class="govuk-heading-s">Legal basis of processing</h3>
       <p class="govuk-body">The legal basis for processing your personal data is:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>data subject consents</li>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>Public task: Processing is necessary for the performance of a task carried out in the public interest or in the exercise of official authority vested in the data controller, to provide appropriate tools and systems to support civil servants to summarise documents and develop briefings.</li>
       </ul>
 
       <h3 class="govuk-heading-s">Recipients</h3>
-      <p class="govuk-body">Your personal data will be shared by us with analysts/researchers within the {{ departmental_owner }} if you have consented to be contacted further about Redbox.</p>
-      <p class="govuk-body">As your personal data will be stored on our IT infrastructure it will also be shared with our data processors who provide email and document management and storage services.</p>
+      <p class="govuk-body">Your personal data will be shared by us with analysts/researchers within the {{ departmental_owner }} Incubator for Artificial Intelligence (i.AI) if you have opted to take part in research.</p>
+      <p class="govuk-body">As your personal data will be stored on our IT infrastructure it will also be shared with our data processors who provide email and document management and storage services. As part of the existing contracts with the Large Language Model (LLM) they will not use any data inputted to train the models. These LLMs are treated as Third Party services and as such their respective Terms of Use and Terms of Conditions, found on their websites, will apply.</p>
 
       <h3 class="govuk-heading-s">Retention</h3>
-      <p class="govuk-body">Your personal data will be retained for 12 months after account inactivity. At that point we will delete your email address, depersonalising the data we hold. If you have provided us consent to contact you, we will retain your email until <DATE> and continue sharing it with evaluators so they can conduct research on the long term impact of Redbox.</p>
+      <p class="govuk-body">Your personal data will be retained for 12 months after account inactivity. At that point we will delete your email address, depersonalising the data we hold.</p>
+      <p class="govuk-body">Redbox stores your content for 30 days. Content that you delete is archived but accessible for Freedom of Information requests (FOIs) for 30 days.</p>
+      <p class="govuk-body">Documents will automatically be deleted when a chat is deleted.</p>
+      <p class="govuk-body">All data is stored in Cabinet Office AWS and Elastic.</p>
 
       <h3 class="govuk-heading-s">Your rights</h3>
-      <p class="govuk-body">You have the right to request information about how your personal data are processed, and to request a copy of that personal data.</p>
-      <p class="govuk-body">You have the right to request that any inaccuracies in your personal data are rectified without delay.</p>
-      <p class="govuk-body">You have the right to request that any incomplete personal data are completed, including by means of a supplementary statement.</p>
-      <p class="govuk-body">You have the right to request that your personal data are erased if there is no longer a justification for them to be processed.</p>
-      <p class="govuk-body">You have the right in certain circumstances (for example, where accuracy is contested) to request that the processing of your personal data is restricted.</p>
-      <p class="govuk-body">You have the right to object to the processing of your personal data where it is processed for direct marketing purposes.</p>
-      <p class="govuk-body">You have the right to withdraw consent to the processing of your personal data at any time.</p>
+      <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>You have the right to request information about how your personal data are processed, and to request a copy of that personal data.</li>
+        <li>You have the right to request that any inaccuracies in your personal data are rectified without delay.</li>
+        <li>You have the right to request that any incomplete personal data are completed, including by means of a supplementary statement.</li>
+        <li>You have the right to request that your personal data are erased if there is no longer a justification for them to be processed.</li>
+        <li>You have the right in certain circumstances (for example, where accuracy is contested) to request that the processing of your personal data is restricted.</li>
+        <li>You have the right to object to the processing of your personal data where it is processed for direct marketing purposes.</li>
+        <li>You have the right to withdraw consent to the processing of your personal data at any time.</li>
+      </ul>
+      <p class="govuk-body">You will be asked to re-accept Terms and Conditions every 1 year as well as every time the Terms and Conditions are updated.</p>
 
       <h3 class="govuk-heading-s">International transfers</h3>
-      <p class="govuk-body">As your personal data is stored on our IT infrastructure, and shared with our data processors, it may be transferred and stored securely outside the UK. Where that is the case it will be subject to equivalent legal protection through an adequacy decision or reliance on Standard Contractual Clauses.</p>
-
-      <h3 class="govuk-heading-s">Complaints</h3>
-      <p class="govuk-body">If you consider that your personal data has been misused or mishandled, you may make a complaint to the Information Commissioner, who is an independent regulator. The Information Commissioner can be contacted at: Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF, or 0303 123 1113, or <a href="mailto:icocasework@ico.org.uk" class="govuk-link">icocasework@ico.org.uk</a>. Any complaint to the Information Commissioner is without prejudice to your right to seek redress through the courts.</p>
+      <p class="govuk-body">Redbox personal data is stored on our IT infrastructure in the UK. However, Redbox chat data is processed where it is subject to equivalent legal protection as the UK through an adequacy decision.</p>
 
       <h3 class="govuk-heading-s">Contact details</h3>
-      <p class="govuk-body">The data controller for your personal data is the {{ departmental_owner }}. The contact details for the data controller are: {{ department_address | safe }}.</p>
-      <p class="govuk-body">The contact details for the data controller's Data Protection Officer are: <a href="mailto:dpo@cabinetoffice.gov.uk" class="govuk-link">dpo@cabinetoffice.gov.uk</a>.</p>
-      <p class="govuk-body">The Data Protection Officer provides independent advice and monitoring of {{ departmental_owner }}'s use of personal information.</p>
+      <p class="govuk-body">The data controller for your personal data is {{ departmental_owner }}. The contact details for the data controller are: {{ department_address | safe }}.</p>
+      <p class="govuk-body">If you are unhappy with the way we have handled your personal data, please write to the department’s Data Protection Officer in the first instance using the contact details above.</p>
+
+      <h3 class="govuk-heading-s">Complaints</h3>
+      <p class="govuk-body">If you consider that your personal data has been misused or mishandled, you may make a complaint to the Information Commissioner, who is an independent regulator. The Information Commissioner can be contacted at: Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF, or 0303 123 1113, or <a href="mailto:icocasework@ico.org.uk" class="govuk-link">icocasework@ico.org.uk</a>.</p>
 
       <h2 class="govuk-heading-m">Changes to this notice</h2>
-      <p class="govuk-body">We may change this privacy notice. When we make changes to this notice, the "last updated" date at the bottom of this page will also change. Any changes to this privacy notice will apply to you and your data immediately. If these changes affect how your personal data is processed, {{ departmental_owner }} will take reasonable steps to make sure you know.</p>
+      <p class="govuk-body">We may change this privacy notice. When we make changes to this notice, the "last updated" date at the bottom of this page will also change. Any changes to this privacy notice will apply to you and your data immediately. If these changes affect how your personal data is processed, {{ departmental_owner }} will take reasonable steps to make you aware of the changes.</p>
       <p class="govuk-body">Last updated: {{ last_updated }}</p>
 
     </div>

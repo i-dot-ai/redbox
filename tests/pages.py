@@ -456,7 +456,13 @@ class CitationsPage(SignedInBasePage):
 class PrivacyPage(BasePage):
     @property
     def expected_page_title(self) -> str:
-        return "Privacy notice - Redbox"
+        return "Privacy policy - Redbox"
+
+
+class CookiesPage(BasePage):
+    @property
+    def expected_page_title(self) -> str:
+        return "Cookies - Redbox"
 
 
 class AccessibilityPage(BasePage):

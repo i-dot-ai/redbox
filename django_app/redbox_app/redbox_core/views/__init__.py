@@ -17,7 +17,12 @@ from redbox_app.redbox_core.views.document_views import (
     file_status_api_view,
     remove_doc_view,
 )
-from redbox_app.redbox_core.views.info_views import accessibility_statement_view, privacy_notice_view, support_view
+from redbox_app.redbox_core.views.info_views import (
+    accessibility_statement_view,
+    cookies_view,
+    privacy_notice_view,
+    support_view,
+)
 from redbox_app.redbox_core.views.misc_views import SecurityTxtRedirectView, health, homepage_view
 from redbox_app.redbox_core.views.signup_views import Signup1, Signup2, Signup3, Signup4
 
@@ -38,6 +43,7 @@ __all__ = [
     "privacy_notice_view",
     "accessibility_statement_view",
     "support_view",
+    "cookies_view",
     "sign_in_view",
     "sign_in_link_sent_view",
     "signed_out_view",

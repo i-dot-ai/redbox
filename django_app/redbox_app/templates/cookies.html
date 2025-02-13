@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% set pageTitle = "Cookies" %}
+
+{% set departmental_owner = "DSIT" %}
+{% set department_address = "DSIT Data Protection Officer, Department for Science, Innovation & Technology, 22-26 Whitehall, London, SW1A 2EG, Email <a href='mailto:dataprotection@dsit.gov.uk' class='govuk-link'>dataprotection@dsit.gov.uk</a>" %}
+{% set last_updated = "13th February 2025" %}
+
+{% block content %}
+
+<div class="govuk-width-container iai-grid">
+  <div class="iai-grid__start-3-span-8">
+
+    <h1 class="govuk-heading-l">Redbox cookies notice</h1>
+    <div class="govuk-body">
+      <p class="govuk-body">The Department for Science and Innovation (DSIT) is the controller and is responsible for the processing of your Personal Data as described in this Privacy Policy.</p>
+
+      <table class="govuk-table">
+        <caption class="govuk-visually-hidden">Cookies</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Name</th>
+            <th scope="col" class="govuk-table__header">Purpose</th>
+            <th scope="col" class="govuk-table__header">Expires</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body govuk-body-s">
+          <tr class="govuk-table__row">
+            <th scope="row" class="govuk-table__cell">csrftoken</th>
+            <td class="govuk-table__cell">Prevent cross-site request forgery (CSRF) attacks</td>
+            <td class="govuk-table__cell">364 days</td>
+          </tr>
+          <tr class="govuk-table__row">
+            <th scope="row" class="govuk-table__cell">sessionid</th>
+            <td class="govuk-table__cell">Keeps track of the signed-in user’s session</td>
+            <td class="govuk-table__cell">21 hours</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
