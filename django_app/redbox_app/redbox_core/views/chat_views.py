@@ -71,7 +71,7 @@ class ChatsView(View):
                     "description": chat_llm_backend.description,
                     "max_tokens": chat_llm_backend.context_window_size,
                 }
-                for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
+                for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True).order_by("enabled", "name")
             ],
         }
 
