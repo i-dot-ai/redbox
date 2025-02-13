@@ -535,10 +535,8 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     chat = models.ForeignKey(
         Chat,
-        null=True,
-        blank=True,
         on_delete=models.CASCADE,
-        help_text="chat that this document belongs to, which may be nothing for now",
+        help_text="chat that this document belongs to",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in extracted text")
