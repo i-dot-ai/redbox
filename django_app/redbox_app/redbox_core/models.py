@@ -49,8 +49,6 @@ class UUIDPrimaryKeyBase(models.Model):
         ordering = ["created_at"]
 
 
-
-
 class ChatLLMBackend(models.Model):
     """https://python.langchain.com/docs/how_to/chat_models_universal_init/"""
 
