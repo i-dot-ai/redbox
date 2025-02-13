@@ -535,8 +535,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     )
     chat = models.ForeignKey(
         Chat,
-        null=True,
-        blank=True,
         on_delete=models.CASCADE,
         help_text="chat that this document belongs to, which may be nothing for now",
     )
