@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='file',
             name='chat',
-            field=models.ForeignKey(help_text='chat that this document belongs to, which may be nothing for now', on_delete=django.db.models.deletion.CASCADE, to='redbox_core.chat'),
+            field=models.ForeignKey(help_text='chat that this document belongs to', on_delete=django.db.models.deletion.CASCADE, to='redbox_core.chat'),
         ),
     ]
