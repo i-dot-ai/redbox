@@ -81,10 +81,26 @@ resource "aws_secretsmanager_secret" "django-app-secret" {
   }
 }
 
+resource "aws_secretsmanager_secret" "litellm-secret" {
+  name = "${local.name}-litellm-secret"
+  tags = {
+    "platform:secret-purpose" = "general"
+  }
+}
+
+resource "random_password" "litellm_ui_password" {
+  length           = 16
+  special          = true
+}
 
 resource "aws_secretsmanager_secret_version" "django-app-json-secret" {
   secret_id     = aws_secretsmanager_secret.django-app-secret.id
   secret_string = jsonencode(local.django_app_secrets)
+}
+
+resource "aws_secretsmanager_secret_version" "litellm-json-secret" {
+  secret_id     = aws_secretsmanager_secret.litellm-secret.id
+  secret_string = jsonencode(local.litellm_secrets)
 }
 
 
@@ -231,8 +247,8 @@ module "litellm" {
   aws_lb_arn                   = module.load_balancer.alb_arn
   https_listener_arn           = data.aws_lb_listener.lb_listener_443.arn
   ephemeral_storage            = 30
-  environment_variables        = local.django_app_environment_variables
-  secrets                      = local.reconstructed_django_secrets
+  environment_variables        = local.litellm_environment_variables
+  secrets                      = local.reconstructed_litellm_secrets
   auto_scale_off_peak_times    = true
   wait_for_ready_state         = true
 }
