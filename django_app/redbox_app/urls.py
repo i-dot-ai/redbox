@@ -34,6 +34,7 @@ if settings.LOGIN_METHOD == "sso":
 
 info_urlpatterns = [
     path("privacy-notice/", views.info_views.privacy_notice_view, name="privacy-notice"),
+    path("cookies/", views.cookies_view, name="cookies"),
     path(
         "accessibility-statement/",
         views.accessibility_statement_view,
