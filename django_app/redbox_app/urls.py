@@ -5,6 +5,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
+from redbox_core.views.chat_views import ChatViewSet
+from rest_framework import routers
 
 from redbox_app.redbox_core import views
 from redbox_app.redbox_core.views import api_views
@@ -43,13 +45,12 @@ info_urlpatterns = [
     path("support/", views.support_view, name="support"),
 ]
 
+router = routers.DefaultRouter()
+router.register(r"chat", ChatViewSet, basename="chat")
 
 chat_urlpatterns = [
     path("chats/", views.ChatsViewNew.as_view(), name="chats"),
     path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
-    path("chats/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
-    path("chats/<uuid:chat_id>/update-chat-feedback", views.UpdateChatFeedback.as_view(), name="chat-feedback"),
-    path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
     path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
     path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
     path("ratings/<uuid:message_id>/", rate_chat_message, name="ratings"),
@@ -75,6 +76,7 @@ other_urlpatterns = [
 
 api_url_patterns = [
     path("api/v0/file/", api_views.file_upload, name="file-upload"),
+    path("api/v0/", include(router.urls), name="chat"),
 ]
 
 urlpatterns = (
