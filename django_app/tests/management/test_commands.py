@@ -1,3 +1,4 @@
+import contextlib
 import json
 from datetime import UTC, datetime, timedelta
 from io import StringIO
@@ -166,8 +167,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
     # delete file if it already exists
     try:
         s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")
-    except Exception:
-        pass
+    except Exception:  # noqa: BLE001
+        contextlib.suppress(Exception)
 
     # When
     call_command("chat_metrics")
