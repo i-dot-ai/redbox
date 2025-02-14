@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-const { signIn, sendMessage } = require("./utils.js");
+const { test, expect, sendMessage, signIn } = require("./utils.js");
+
 
 test(`Chat history functionality works as expected`, async ({ page }) => {
   await signIn(page);

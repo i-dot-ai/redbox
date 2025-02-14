@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-const { signIn, uploadDocument, sendMessage } = require("./utils.js");
+const { test, expect, sendMessage, signIn, uploadDocument } = require("./utils.js");
 
 
 test(`A document can be uploaded and removed before sending`, async ({ page }) => {
