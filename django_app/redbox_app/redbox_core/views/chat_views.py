@@ -1,11 +1,9 @@
 import logging
 import uuid
-from dataclasses import dataclass
-from http import HTTPStatus
 from itertools import groupby
 from operator import attrgetter
+from typing import ClassVar
 
-from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -13,6 +11,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+from redbox_core.utils import sanitize_json
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.serializers import ModelSerializer
+from rest_framework.viewsets import ModelViewSet
 from yarl import URL
 
 from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, File
@@ -82,42 +84,18 @@ class ChatsView(View):
         )
 
 
-class ChatsTitleView(View):
-    @dataclass_json(undefined=Undefined.EXCLUDE)
-    @dataclass(frozen=True)
-    class Title:
-        name: str
+class ChatSerializer(ModelSerializer):
+    class Meta:
+        model = Chat
+        fields = "__all__"
 
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        user_rating = ChatsTitleView.Title.schema().loads(request.body)
-
-        chat.name = user_rating.name
-        chat.save(update_fields=["name"])
-
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+    def to_internal_value(self, data):
+        data = sanitize_json(data)
+        return super().to_internal_value(data)
 
 
-class UpdateChatFeedback(View):
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
-        def convert_to_boolean(value: str):
-            return value == "Yes"
-
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        chat.feedback_achieved = convert_to_boolean(request.POST.get("achieved"))
-        chat.feedback_saved_time = convert_to_boolean(request.POST.get("saved_time"))
-        chat.feedback_improved_work = convert_to_boolean(request.POST.get("improved_work"))
-        chat.feedback_notes = request.POST.get("notes")
-        chat.save()
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
-
-
-class DeleteChat(View):
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:  # noqa: ARG002
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        chat.archived = True
-        chat.save()
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+class ChatViewSet(ModelViewSet):
+    serializer_class = ChatSerializer
+    queryset = Chat.objects.all()
+    permission_classes: ClassVar = [IsAuthenticated]
+    lookup_url_kwarg = "chat_id"
