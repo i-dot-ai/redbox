@@ -223,9 +223,12 @@ class ExitFeedback extends HTMLElement {
   }
 
   async #sendFeedback() {
+    if (!this.dataset.updateUrl) {
+      return;
+    }
     try {
-      await fetch(`/chats/${this.dataset.chatid}/update-chat-feedback`, {
-        method: "POST",
+      await fetch(this.dataset.updateUrl, {
+        method: "PATCH",
         headers: {
           "X-CSRFToken": this.dataset.csrf || "",
         },
