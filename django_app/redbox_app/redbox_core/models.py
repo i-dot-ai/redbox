@@ -41,11 +41,6 @@ def escape_curly_brackets(text: str) -> str:
 class UUIDPrimaryKeyBase(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    class Meta:
-        abstract = True
-
-
-class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     modified_at = models.DateTimeField(editable=False, auto_now=True)
 
@@ -422,7 +417,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
+class Chat(UUIDPrimaryKeyBase):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
@@ -515,7 +510,7 @@ def build_s3_key(instance, filename: str) -> str:
     return f"{instance.chat.user.email}/{filename}"
 
 
-class File(UUIDPrimaryKeyBase, TimeStampedModel):
+class File(UUIDPrimaryKeyBase):
     class Status(models.TextChoices):
         complete = "complete"
         errored = "errored"
@@ -635,7 +630,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         return OrmQ.objects.filter(lock__lt=self.task.lock).count()
 
 
-class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+class ChatMessage(UUIDPrimaryKeyBase):
     class Role(models.TextChoices):
         ai = "ai"
         user = "user"
