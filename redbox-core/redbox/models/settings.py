@@ -154,7 +154,7 @@ Question: {{messages[-1].content}}
                 region_name=self.aws_region,
             )
 
-        msg = f"unkown object_store={self.object_store}"
+        msg = f"unknown object_store={self.object_store}"
         raise NotImplementedError(msg)
 
 
