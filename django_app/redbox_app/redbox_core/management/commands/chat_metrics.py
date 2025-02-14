@@ -22,14 +22,13 @@ class MetricSerializer(Serializer):
     grade = CharField(source="chat__user__grade")
     profession = CharField(source="chat__user__profession")
     ai_experience = CharField(source="chat__user__ai_experience")
-
-    token_count = FloatField(source="token_count__avg")
-    rating = FloatField(source="rating__avg")
-    delay_seconds = FloatField(source="delay__avg")
-    id = IntegerField(source="id__count")
-    n_selected_files = FloatField(source="n_selected_files__count")
-    chat_id = IntegerField(source="chat_id__count")
-    user_id = IntegerField(source="user_id__count")
+    token_count__avg = FloatField()
+    rating__avg = FloatField()
+    delay__avg = FloatField()
+    id__count = IntegerField()
+    n_selected_files__count = FloatField()
+    chat_id__count = IntegerField()
+    user_id__count = IntegerField()
 
 
 class Command(BaseCommand):
