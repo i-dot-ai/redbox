@@ -2,7 +2,6 @@ import logging
 import uuid
 from itertools import groupby
 from operator import attrgetter
-from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,10 +10,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-from redbox_core.utils import sanitize_json
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.serializers import ModelSerializer
-from rest_framework.viewsets import ModelViewSet
 from yarl import URL
 
 from redbox_app.redbox_core.models import Chat, ChatLLMBackend, ChatMessage, File
@@ -82,20 +77,3 @@ class ChatsView(View):
             template_name="chats.html",
             context=context,
         )
-
-
-class ChatSerializer(ModelSerializer):
-    class Meta:
-        model = Chat
-        fields = "__all__"
-
-    def to_internal_value(self, data):
-        data = sanitize_json(data)
-        return super().to_internal_value(data)
-
-
-class ChatViewSet(ModelViewSet):
-    serializer_class = ChatSerializer
-    queryset = Chat.objects.all()
-    permission_classes: ClassVar = [IsAuthenticated]
-    lookup_url_kwarg = "chat_id"
