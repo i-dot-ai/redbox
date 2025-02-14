@@ -157,7 +157,7 @@
 
   </div>
 
-  <exit-feedback class="exit-feedback" data-chatid="{{ current_chat.id }}" data-csrf="{{ csrf_token }}"></exit-feedback>
+  <exit-feedback class="exit-feedback" data-chatid="{{ current_chat.id }}" data-csrf="{{ csrf_token }}" data-update-url="{{ url('chat-detail', current_chat.id) }}"></exit-feedback>
 
 </div>
 
