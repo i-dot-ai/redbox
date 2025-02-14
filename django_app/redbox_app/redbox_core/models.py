@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, Sum, UniqueConstraint
+from django.db.models import Avg, Count, Max, Min, Sum, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
@@ -715,6 +715,23 @@ class ChatMessage(UUIDPrimaryKeyBase):
                 id=uuid.uuid4(),
                 document=elastic_log_msg,
             )
+
+    @classmethod
+    def metrics(cls):
+        return cls.objects.values(
+            "chat__user__business_unit",
+            "chat__user__grade",
+            "chat__user__profession",
+            "chat__user__ai_experience",
+        ).annotate(
+            token_count__avg=Avg("token_count"),
+            rating__avg=Avg("rating"),
+            delay__avg=Avg("delay"),
+            id__count=Count("id", distinct=True),
+            n_selected_files__count=Count("chat__file", distinct=True),
+            chat_id__count=Count("chat", distinct=True),
+            user_id__count=Count("chat__user", distinct=True),
+        )
 
 
 def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
