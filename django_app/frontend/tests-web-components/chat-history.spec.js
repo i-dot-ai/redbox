@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-const { signIn } = require("./utils.js");
+const { signIn, sendMessage } = require("./utils.js");
 
 test(`Chat history functionality works as expected`, async ({ page }) => {
   await signIn(page);
@@ -11,17 +11,16 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   // wait for chat-history to be ready
   await expect(page.locator("chat-history")).toBeVisible();
 
-  await page.evaluate(() => {
-    document.querySelector("chat-history").addChat("session-id", "Test chat");
-  });
+  // create a new chat
+  await sendMessage(page, "Test chat");
+  await expect(page.locator(".chat-title__heading")).toContainText("Test chat");
 
   // The chat history item has been created
-  const chatHistoryItem = page.locator(".rb-chat-history__link").first();
+  let chatHistoryItem = page.locator(".rb-chat-history__link").first();
   const count2 = await page.evaluate(
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
   await expect(chatHistoryItem).toContainText("Test chat");
-  await expect(chatHistoryItem).toHaveAttribute("href", "/chats/session-id");
   expect(count2).toEqual(count1 + 1);
 
   // A "Today" heading has been created
@@ -37,6 +36,11 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
   await textInput.press("Enter");
   await expect(chatHistoryItem).toContainText("Renamed chat");
 
+  // A chat is renamed on the server
+  await page.reload();
+  chatHistoryItem = page.locator(".rb-chat-history__link").first();
+  await expect(chatHistoryItem).toContainText("Renamed chat");
+
   // A chat can be deleted
   await page.locator(".rb-chat-history__actions-button").first().click();
   await page.locator('button[data-action="delete"]').first().click();
@@ -46,4 +50,11 @@ test(`Chat history functionality works as expected`, async ({ page }) => {
     () => document.querySelectorAll(".rb-chat-history__link").length
   );
   expect(count3).toEqual(count1);
+
+  // A chat is deleted on the server (therefore won't appear on page reload)
+  await page.reload();
+  const count4 = await page.evaluate(
+    () => document.querySelectorAll(".rb-chat-history__link").length
+  );
+  expect(count4).toEqual(count3);
 });
