@@ -1,5 +1,6 @@
 import logging
 from http import HTTPStatus
+from typing import ClassVar
 from uuid import UUID
 
 from django.conf import settings
@@ -10,12 +11,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.fields import CharField, FileField, IntegerField, ListField, UUIDField
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import Serializer
+from rest_framework.serializers import ModelSerializer, Serializer
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 from redbox import Redbox
 from redbox_app.redbox_core import error_messages
-from redbox_app.redbox_core.models import ChatMessage, File, get_chat_session
+from redbox_app.redbox_core.models import Chat, ChatMessage, File, get_chat_session
 from redbox_app.redbox_core.utils import sanitize_json
 
 User = get_user_model()
@@ -113,3 +115,20 @@ class ChatMessageView(APIView):
 
         except BaseException:  # noqa: BLE001
             return Response({"non_field_error": error_messages.CORE_ERROR_MESSAGE}, status=status.HTTP_200_OK)
+
+
+class ChatSerializer(ModelSerializer):
+    class Meta:
+        model = Chat
+        fields = "__all__"
+
+    def to_internal_value(self, data):
+        data = sanitize_json(data)
+        return super().to_internal_value(data)
+
+
+class ChatViewSet(ModelViewSet):
+    serializer_class = ChatSerializer
+    queryset = Chat.objects.all()
+    permission_classes: ClassVar = [IsAuthenticated]
+    lookup_url_kwarg = "chat_id"
