@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-const { sendMessage, signIn } = require("./utils.js");
+const { test, expect, sendMessage, signIn } = require("./utils.js");
+
 
 test(`Streaming can be started and stopped`, async ({ page }) => {
   await signIn(page);

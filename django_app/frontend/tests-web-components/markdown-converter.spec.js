@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-const { sendMessage, signIn } = require("./utils.js");
+const { test, expect, signIn } = require("./utils.js");
+
 
 test(`Markdown can be converted to HTML`, async ({ page }) => {
   await signIn(page);

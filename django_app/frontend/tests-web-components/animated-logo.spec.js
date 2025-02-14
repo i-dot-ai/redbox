@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+const { test, expect } = require("./utils.js");
 
 
 test(`The animated logo can be paused`, async ({ page }) => {
