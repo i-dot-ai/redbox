@@ -8,6 +8,8 @@ class ChatHistoryItem extends HTMLElement {
     /** @type {HTMLButtonElement | null} */
     this.toggleButton = this.querySelector("button[aria-expanded]");
     this.chatLink = /** @type {HTMLAnchorElement} */ (this.querySelector(".rb-chat-history__link"));
+    this.chatTitle = this.querySelector("a")?.textContent;
+    this.updateUrl = this.dataset.titleUrl?.replace("00000000-0000-0000-0000-000000000000", this.dataset.chatid || "");
   }
 
   connectedCallback() {
@@ -72,21 +74,13 @@ class ChatHistoryItem extends HTMLElement {
       this.#toggleChatTitleEdit(false);
       this.#updateChatTitle(chatTitleInput.value, true);
     });
-    chatTitleInput.addEventListener("blur", () => {
-      this.#toggleChatTitleEdit(false);
-    });
     chatTitleInput.addEventListener("keydown", (evt) => {
       if (!chatTitleInput) {
         return false;
       }
       switch (/** @type {KeyboardEvent} */ (evt).key) {
         case "Escape":
-          chatTitleInput.value = this.dataset.title || "";
-          this.#toggleChatTitleEdit(false);
-          return true;
-        case "Enter":
-          evt.preventDefault();
-          this.#updateChatTitle(chatTitleInput.value, true);
+          chatTitleInput.value = this.chatTitle || "";
           this.#toggleChatTitleEdit(false);
           return true;
         default:
@@ -124,8 +118,8 @@ class ChatHistoryItem extends HTMLElement {
         /** @type {HTMLInputElement | null} */ (
         document.querySelector('[name="csrfmiddlewaretoken"]')
     )?.value || "";
-    await fetch(`/chats/${this.dataset.chatid}/delete-chat`, {
-        method: "POST",
+    fetch(this.updateUrl || "", {
+        method: "DELETE",
         headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
     });
     if (this.dataset.iscurrentchat === "true") {
@@ -164,12 +158,8 @@ class ChatHistoryItem extends HTMLElement {
       document.querySelector('[name="csrfmiddlewaretoken"]')
     )?.value || "";
 
-    if (!this.dataset.titleUrl || !this.dataset.chatid) {
-      return;
-    }
-
-    fetch(this.dataset.titleUrl.replace("00000000-0000-0000-0000-000000000000", this.dataset.chatid), {
-      method: "POST",
+    fetch(this.updateUrl || "", {
+      method: "PATCH",
       headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
       body: JSON.stringify({name: newTitle}),
     });
@@ -186,14 +176,14 @@ class ChatHistoryItem extends HTMLElement {
   };
 
   #printChat = () => {
-    const url = this.querySelector(".rb-chat-history__link").href;
+    const url = /** @type {HTMLAnchorElement} */(this.querySelector(".rb-chat-history__link")).href;
     const printFrame = document.createElement("iframe");
     printFrame.addEventListener("load", () => {
       const closePrint = () => {
         document.body.removeChild(printFrame);
       };
-      printFrame.contentWindow.addEventListener("beforeunload", closePrint);
-      printFrame.contentWindow.addEventListener("afterprint", closePrint);
+      printFrame.contentWindow?.addEventListener("beforeunload", closePrint);
+      printFrame.contentWindow?.addEventListener("afterprint", closePrint);
       printFrame.contentWindow?.print();
       printFrame.style.display = "none";
     });

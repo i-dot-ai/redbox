@@ -31,8 +31,8 @@ const signIn = async (page) => {
   await expect(page.locator(".chat-options__heading")).toContainText("What would you like to ask?");
 };
 
-const sendMessage = async (page) => {
-  await page.locator(".rb-chat-input textarea").fill("Testing");
+const sendMessage = async (page, message) => {
+  await page.locator(".rb-chat-input textarea").fill(message || "Testing");
   await page.getByRole("button", { name: "Send" }).click();
 };
 

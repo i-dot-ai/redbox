@@ -67,7 +67,7 @@
         {% if messages.count() %}
           {% set chat_name = current_chat.name %}
         {% endif %}
-        <chat-title class="chat-title" data-session-id="{{ chat_id }}" data-title="{{ chat_name or '' }}" data-title-length="{{ chat_title_length }}" data-title-url="{{ url('chat-titles', '00000000-0000-0000-0000-000000000000') }}">
+        <chat-title class="chat-title" data-session-id="{{ chat_id }}" data-title="{{ chat_name or '' }}" data-title-length="{{ chat_title_length }}" data-title-url="{{ url('chat-detail', '00000000-0000-0000-0000-000000000000') }}">
           {% if messages.count() %}
             <h2 class="chat-title__heading govuk-heading-m">{{ current_chat.name }}</h2>
           {% else %}
