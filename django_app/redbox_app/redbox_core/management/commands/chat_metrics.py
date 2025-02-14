@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management import BaseCommand
 from rest_framework.fields import CharField, FloatField, IntegerField
 from rest_framework.serializers import Serializer
@@ -44,4 +45,4 @@ class Command(BaseCommand):
             for record in serializer.data:
                 to_csv(f, record.values())
 
-        s3_client.upload_file(local_file_path, env.bucket_name, file_name)
+        s3_client.upload_file(local_file_path, settings.BUCKET_NAME, file_name)

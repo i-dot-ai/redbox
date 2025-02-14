@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime, timedelta
 from io import StringIO
 
@@ -162,10 +163,36 @@ def test_reingest_files(uploaded_file: File):
 
 @pytest.mark.django_db(transaction=True)
 def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):  # noqa: ARG001
-    assert s3_client.list_objects(Bucket=settings.BUCKET_NAME)
+    # delete file if it already exists
+    try:
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")
+    except Exception:
+        pass
 
     # When
     call_command("chat_metrics")
 
+    def read_line(txt):
+        return json.loads(f"[{txt.decode()}]")
+
     # Then
-    assert s3_client.get_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")
+    lines = list(
+        map(read_line, s3_client.get_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")["Body"].readlines())
+    )
+    expected_value = [
+        [
+            "business_unit",
+            "grade",
+            "profession",
+            "ai_experience",
+            "token_count",
+            "rating",
+            "delay_seconds",
+            "id",
+            "n_selected_files",
+            "chat_id",
+            "user_id",
+        ],
+        ["Government Business Services", "D", "IA", "Experienced Navigator", 2.4, None, 0.0, 5, 0.0, 5, 1],
+    ]
+    assert lines == expected_value
