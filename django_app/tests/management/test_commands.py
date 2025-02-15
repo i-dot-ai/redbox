@@ -10,6 +10,7 @@ from django.core.management import CommandError, call_command
 from django.utils import timezone
 from freezegun import freeze_time
 from magic_link.models import MagicLink
+from pytz import utc
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File
 
@@ -180,8 +181,13 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
     lines = list(
         map(read_line, s3_client.get_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")["Body"].readlines())
     )
+
+    def historic_date(days_ago: int):
+        return (datetime.now(tz=utc) - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
     expected_value = [
         [
+            "created_at__date",
             "business_unit",
             "grade",
             "profession",
@@ -194,6 +200,75 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             "chat_id__count",
             "user_id__count",
         ],
-        ["Government Business Services", "D", "IA", "Experienced Navigator", 2.4, None, 0.0, 5, 0.0, 5, 1],
+        [
+            historic_date(days_ago=40),
+            "Government Business Services",
+            "D",
+            "IA",
+            "Experienced Navigator",
+            3.0,
+            None,
+            0.0,
+            1,
+            0.0,
+            1,
+            1,
+        ],
+        [
+            historic_date(days_ago=20),
+            "Government Business Services",
+            "D",
+            "IA",
+            "Experienced Navigator",
+            3.0,
+            None,
+            0.0,
+            1,
+            0.0,
+            1,
+            1,
+        ],
+        [
+            historic_date(days_ago=5),
+            "Government Business Services",
+            "D",
+            "IA",
+            "Experienced Navigator",
+            3.0,
+            None,
+            0.0,
+            1,
+            0.0,
+            1,
+            1,
+        ],
+        [
+            historic_date(days_ago=1),
+            "Government Business Services",
+            "D",
+            "IA",
+            "Experienced Navigator",
+            2.0,
+            None,
+            0.0,
+            1,
+            0.0,
+            1,
+            1,
+        ],
+        [
+            historic_date(days_ago=0),
+            "Government Business Services",
+            "D",
+            "IA",
+            "Experienced Navigator",
+            1.0,
+            None,
+            0.0,
+            1,
+            0.0,
+            1,
+            1,
+        ],
     ]
     assert lines == expected_value

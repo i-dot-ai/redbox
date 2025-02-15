@@ -723,6 +723,7 @@ class ChatMessage(UUIDPrimaryKeyBase):
             "chat__user__grade",
             "chat__user__profession",
             "chat__user__ai_experience",
+            "created_at__date",
         ).annotate(
             token_count__avg=Avg("token_count"),
             rating__avg=Avg("rating"),
