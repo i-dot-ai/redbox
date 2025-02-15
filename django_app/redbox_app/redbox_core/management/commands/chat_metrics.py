@@ -3,7 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from rest_framework.fields import CharField, FloatField, IntegerField
+from rest_framework.fields import CharField, DateField, FloatField, IntegerField
 from rest_framework.serializers import Serializer
 
 from redbox.models import Settings
@@ -18,6 +18,7 @@ def to_csv(writer, record):
 
 
 class MetricSerializer(Serializer):
+    created_at__date = DateField()
     business_unit = CharField(source="chat__user__business_unit")
     grade = CharField(source="chat__user__grade")
     profession = CharField(source="chat__user__profession")
