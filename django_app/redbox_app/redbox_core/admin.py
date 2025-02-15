@@ -209,10 +209,10 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ["file_name", "chat__user", "token_count", "status", "created_at"]
-    list_filter = ["chat__user", "status"]
+    list_filter = ["status"]
     date_hierarchy = "created_at"
-    actions = ["reupload"]
-    search_fields = ["chat__user__email", "file_name"]
+    search_fields = ["chat__user__email", "original_file__name"]
+    fields = ["file_name", "created_at", "status", "original_file", "chat__user", "token_count", "text", "ingest_error"]
 
 
 admin.site.register(User, UserAdmin)
