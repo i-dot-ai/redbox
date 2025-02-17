@@ -449,6 +449,9 @@ class Chat(UUIDPrimaryKeyBase):
         if self.temperature is None:
             self.temperature = 0
 
+        for chat_message in self.chatmessage_set.all():
+            chat_message.log()
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
