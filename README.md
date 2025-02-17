@@ -5,13 +5,8 @@
 > [!IMPORTANT]
 > Incubation Project: This project is an incubation project; as such, we DON’T recommend using it in any critical use case. This project is in active development and a work in progress. This project may one day Graduate, in which case this disclaimer will be removed.
 
-> [!NOTE]
-> The original streamlit-app has moved to its own repository https://github.com/i-dot-ai/redbox-copilot-streamlit.
 
-Redbox is a retrieval augmented generation (RAG) app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
-
-- **Better retrieval**. Redbox increases organisational memory by indexing documents
-- **Faster, accurate summarisation**. Redbox can summarise reports read months ago, supplement them with current work, and produce a first draft that lets civil servants focus on what they do best
+Redbox is an app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
 https://github.com/i-dot-ai/redbox-copilot/assets/8233643/e7984242-1403-4c93-9e68-03b3f065b38d
 
@@ -58,13 +53,9 @@ redbox/
 │  └── Dockerfile
 ├── redbox-core/
 │  ├── redbox
-│  │  ├── api/
 │  │  ├── chains/
-│  │  ├── graph/
-│  │  ├── loader/
 │  │  ├── models/
-│  │  ├── retriever/
-│  │  └── storage/
+│  │  └── app.py
 │  ├── tests/
 │  ├── pyproject.toml
 │  └── Dockerfile
@@ -94,16 +85,6 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 If you discover a security vulnerability within this project, please follow our [Security Policy](./SECURITY.md).
 
 ## Troubleshooting
-
-#### Error: Elasticsearch 137
-
-```commandline
-ERROR: Elasticsearch exited unexpectedly, with exit code 137
-```
-
-This is caused by Elasticsearch not having enough memory.
-
-Increase total memory available to 8gb.
 
 ```commandline
 colima down
@@ -183,10 +164,3 @@ Follow the instructions here https://django-q2.readthedocs.io/en/master/schedule
 3. func = `django.core.management.call_command`
 4. args = `"delete_expired_data"`
 5. save
-
-## Vector databases
-
-We are currently using ElasticSearch as our vector database.
-
-We have also successfully deployed Redbox to OpenSearch Serverless but this support should be considered experimental
-at this stage.
