@@ -2,8 +2,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.http import HttpResponse
+import logging
 
-
+logging.basicConfig(level=logging.ERROR)
 @login_required
 def download_metrics(_request):
     try:
@@ -18,4 +19,5 @@ def download_metrics(_request):
         else:
             return HttpResponse("File not found.", status=404)
     except Exception as e:  # noqa: BLE001
-        return HttpResponse(f"Error: {e!s}", status=500)
+        logging.error("An error occurred while downloading metrics.", exc_info=True)
+        return HttpResponse("An internal error has occurred.", status=500)
