@@ -22,8 +22,8 @@ class Redbox:
         settings = get_settings()
         if state.chat_backend.provider == "google_vertexai":
             llm = init_chat_model(
-                model=state.chat_backend.name, 
-                model_provider=state.chat_backend.provider, 
+                model=state.chat_backend.name,
+                model_provider=state.chat_backend.provider,
                 location="europe-west1",
                 # europe-west1 = Belgium
             )
