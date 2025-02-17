@@ -167,7 +167,7 @@ def test_reingest_files(uploaded_file: File):
 def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):  # noqa: ARG001
     # delete file if it already exists
     try:
-        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")
+        s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=settings.METRICS_FILE_NAME)
     except Exception:  # noqa: BLE001
         contextlib.suppress(Exception)
 
@@ -179,7 +179,10 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
 
     # Then
     lines = list(
-        map(read_line, s3_client.get_object(Bucket=settings.BUCKET_NAME, Key="metrics.csv")["Body"].readlines())
+        map(
+            read_line,
+            s3_client.get_object(Bucket=settings.BUCKET_NAME, Key=settings.METRICS_FILE_NAME)["Body"].readlines(),
+        )
     )
 
     def historic_date(days_ago: int):

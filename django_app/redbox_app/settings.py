@@ -402,3 +402,5 @@ if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(file_path)
     with Path.open(file_path, "w") as f:
         f.write(credentials)
+
+METRICS_FILE_NAME = "metrics.csv"
