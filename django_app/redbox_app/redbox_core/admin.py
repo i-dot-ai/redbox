@@ -202,7 +202,7 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
     ]
     inlines = [ChatMessageInline, FileInline]
     list_display = ["name", "user", "created_at"]
-    list_filter = ["user"]
+    list_filter = ["chat_backend__name"]
     date_hierarchy = "created_at"
     search_fields = ["user__email"]
 
