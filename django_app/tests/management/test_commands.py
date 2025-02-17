@@ -187,6 +187,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
 
     expected_value = [
         [
+            "extraction_date",
             "created_at__date",
             "business_unit",
             "grade",
@@ -201,6 +202,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             "user_id__count",
         ],
         [
+            historic_date(days_ago=0),
             historic_date(days_ago=40),
             "Government Business Services",
             "D",
@@ -215,6 +217,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             1,
         ],
         [
+            historic_date(days_ago=0),
             historic_date(days_ago=20),
             "Government Business Services",
             "D",
@@ -229,6 +232,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             1,
         ],
         [
+            historic_date(days_ago=0),
             historic_date(days_ago=5),
             "Government Business Services",
             "D",
@@ -243,6 +247,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             1,
         ],
         [
+            historic_date(days_ago=0),
             historic_date(days_ago=1),
             "Government Business Services",
             "D",
@@ -257,6 +262,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
             1,
         ],
         [
+            historic_date(days_ago=0),
             historic_date(days_ago=0),
             "Government Business Services",
             "D",
