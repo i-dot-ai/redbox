@@ -70,6 +70,7 @@ other_urlpatterns = [
     path(".well-known/security.txt", views.SecurityTxtRedirectView.as_view(), name="security.txt"),
     path("security", views.SecurityTxtRedirectView.as_view(), name="security"),
     path("sitemap", views.misc_views.sitemap_view, name="sitemap"),
+    path("download-metrics/", views.download_metrics, name="download-metrics"),
 ]
 
 

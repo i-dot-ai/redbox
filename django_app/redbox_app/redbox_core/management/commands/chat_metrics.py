@@ -44,8 +44,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):  # noqa: ARG002
         serializer = MetricSerializer(ChatMessage.metrics().all(), many=True)
-        file_name = "metrics.csv"
-        local_file_path = Path.home() / "metrics.csv"
+        file_name = settings.METRICS_FILE_NAME
+        local_file_path = Path.home() / settings.METRICS_FILE_NAME
         with Path.open(local_file_path, "w") as f:
             if serializer.data:
                 to_csv(f, serializer.data[0])

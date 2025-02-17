@@ -20,10 +20,12 @@ from redbox_app.redbox_core.views.info_views import (
     privacy_notice_view,
     support_view,
 )
+from redbox_app.redbox_core.views.metrics_view import download_metrics
 from redbox_app.redbox_core.views.misc_views import SecurityTxtRedirectView, health, homepage_view
 from redbox_app.redbox_core.views.signup_views import Signup1, Signup2, Signup3, Signup4
 
 __all__ = [
+    "download_metrics",
     "ChatMessageView",
     "ChatsView",
     "ChatsViewNew",
