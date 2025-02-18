@@ -102,6 +102,9 @@ body {
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
 /* To add to i.AI Design System */
+.govuk-link {
+  word-break: break-word;
+}
 .govuk-link:visited {
   color: var(--iai-product-colour);
 }

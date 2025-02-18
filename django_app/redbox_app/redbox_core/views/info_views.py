@@ -33,6 +33,11 @@ def support_view(request):
 
 
 @require_http_methods(["GET"])
+def faqs_view(request):
+    return render(request, "faqs.html", {"contact_email": settings.CONTACT_EMAIL})
+
+
+@require_http_methods(["GET"])
 def accessibility_statement_view(request):
     return render(
         request,

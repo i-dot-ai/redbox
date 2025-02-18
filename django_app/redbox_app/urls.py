@@ -42,6 +42,7 @@ info_urlpatterns = [
         name="accessibility-statement",
     ),
     path("support/", views.support_view, name="support"),
+    path("faqs/", views.faqs_view, name="faqs"),
 ]
 
 router = routers.DefaultRouter()
