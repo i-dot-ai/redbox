@@ -17,6 +17,7 @@ from redbox_app.redbox_core.views.document_views import (
 from redbox_app.redbox_core.views.info_views import (
     accessibility_statement_view,
     cookies_view,
+    faqs_view,
     privacy_notice_view,
     support_view,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "privacy_notice_view",
     "accessibility_statement_view",
     "support_view",
+    "faqs_view",
     "cookies_view",
     "sign_in_view",
     "sign_in_link_sent_view",

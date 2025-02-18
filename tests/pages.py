@@ -475,3 +475,9 @@ class SupportPage(BasePage):
     @property
     def expected_page_title(self) -> str:
         return "Support - Redbox"
+
+
+class FaqsPage(BasePage):
+    @property
+    def expected_page_title(self) -> str:
+        return "FAQs - Redbox"

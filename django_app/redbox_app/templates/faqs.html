@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% set pageTitle = "FAQs" %}
+
+{% block content %}
+
+<div class="govuk-width-container iai-grid">
+  <div class="iai-grid__start-3-span-8">
+
+    <h1 class="govuk-heading-l">Redbox frequently asked questions (FAQs)</h1>
+    <p class="govuk-body-l">Redbox is a generative AI tool to assist civil servants in day-to-day tasks.</p>
+    
+    <h2 class="govuk-heading govuk-!-margin-top-7">What is Redbox and what does it do?</h2>
+    <p class="govuk-body">Redbox is a generative AI tool designed to help civil servants in the UK handle large amounts of information. Redbox aims to enhance efficiency and improve public service delivery across various departments.</p>
+    <p class="govuk-body">Redbox lets you chat with the most powerful Large Language Models (LLMs), optionally providing your own documents as context. For example, you can prompt Redbox to extract specific information from your documents, summarise them, and redraft them.</p>
+    <p class="govuk-body">Read more about Redbox on <a class="govuk-link" href="https://ai.gov.uk/projects/redbox/">our website</a> page.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">How do I sign up?</h2>
+    <p class="govuk-body">You can find the latest information about joining Redbox on the <a class="govuk-link" href="https://ai.gov.uk/register-your-interest/">Register your interest</a> page.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Can I upload personally identifiable information into Redbox?</h2>
+    <p class="govuk-body">When accepting the Terms and Conditions and inline with the Redbox Privacy Policy it is requested that you do not upload any personally identifiable information.</p>
+    <p class="govuk-body">However, this is not policed and you are not physically prevented from doing this by Redbox.</p>
+    
+    <h2 class="govuk-heading govuk-!-margin-top-7">Is my data safe?</h2>
+    <p class="govuk-body">Yes, our <a class="govuk-link" href="{{ url('privacy-notice') }}">privacy policy</a> is available to read and some key areas to note are:</p>
+    <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>No data is stored in the LLMs (it is only processed through them) and LLMs are not trained on our data</li>
+        <li>Your chat history is stored in government owned Amazon Web Services (AWS) and is automatically deleted after 30 days</li>
+        <li>Redbox can be used for documents up to and including OFFICIAL SENSITIVE</li>
+        <li>We ask in our Terms and Conditions that users of Redbox don’t upload any personally identifiable information</li>
+        <li>We do not police information uploaded or used in chats but the LLMs may do. For example, OpenAI is sensitive to terrorism, so may not be suitable for national security questions</li>
+    </ul>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">How is my data used?</h2>
+    <p class="govuk-body">Our <a class="govuk-link" href="{{ url('privacy-notice') }}">privacy policy</a> is available to read and some key areas to note are:</p>
+    <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>User information is used to sign up to the service</li>
+        <li>If you consent to at signup, we may contact you for research purposes</li>
+        <li>Prompt or document data is kept for 30 days so that you can refer back to recent chats and to ensure that any issues can be identified if needed and for research and continuous improvement. It is then automatically deleted</li>
+    </ul>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Where does the information given come from?</h2>
+    <p class="govuk-body">Information that Redbox provides comes from:</p>
+    <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>Users’ own documents and information provided in the prompts</li>
+        <li>
+          The LLM's own training data. This includes information up to a certain date that is specific to the model chosen:
+          <ul>
+            <li>Claude: April 2024</li>
+            <li>Gemini: "late" 2024</li>
+            <li>GPT4: October 2023</li>
+          </ul>
+        </li>
+    </ul>
+    <p class="govuk-body">Redbox is unable to access the internet.</p>
+    <p class="govuk-body"><strong>We encourage users to always check the answers Redbox gives as we cannot guarantee they are correct.</strong></p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">How does Redbox compare with commercial offerings like ChatGPT or Claude?</h2>
+    <p class="govuk-body">Redbox is a secure generative AI tool which enables civil servants to work with OFFICIAL SENSITIVE data, unlike commercial models.</p>
+    <p class="govuk-body">Also unlike commercial models, Redbox offers a choice of LLMs.</p>
+    <p class="govuk-body">Model providers’ technology is always changing and we will continue to evaluate Redbox against them to ensure civil servants are getting the most value out of the tools available.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">What is the environmental impact of using Redbox? </h2>
+    <p class="govuk-body">We are currently investigating the best technical approach for quantifying the environmental impact of Redbox, but do not yet have a comprehensive estimate. We are tracking the number of tokens used when users ask Redbox a question, which allows us to start monitoring the environmental costs of the service on an ongoing basis.</p>
+    <p class="govuk-body">Currently, the team follow a number of good practices around sustainable software engineering, including reducing the size of our JavaScript bundles, minimising the use of image files in the application and deprovisioning unused cloud resources.</p>
+    <p class="govuk-body">As well as sustainable model choice, users should make queries as specific and as concise as possible. It is also best to start new conversations for new tasks so that only the relevant information is sent to the LLM for processing.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Am I allowed to use it in my department?</h2>
+    <p class="govuk-body">Currently DSIT, Cabinet Office and No 10 are the departments that Redbox has been rolled out to. If you are in an organisation within those departments and are unsure on policies around the use of AI in any way we recommend reaching out to your senior leaders and checking with them. We are happy to support those conversations if needed.</p>
+    <p class="govuk-body">If you are outside of those departments and would like access to Redbox please email us and we can consider your department for the next phase of rollout.</p>
+    <p class="govuk-body">Contact us at <a class="govuk-link" href="mailto:{{contact_email}}">{{ contact_email }}</a>.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Is there training on Redbox?</h2>
+    <p class="govuk-body">There are a number of courses available for AI on Civil Service Learning, including:</p>
+    <ul class="govuk-list govuk-list--bullet govuk-body">
+        <li>AI Fundamentals: <a class="govuk-link" href="https://learn.civilservice.gov.uk/courses/3TI2CaGVQ8y8Gx06k-0Qsg">https://learn.civilservice.gov.uk/courses/3TI2CaGVQ8y8Gx06k-0Qsg</a></li>
+        <li>Artificial Intelligence: Understanding AI Ethics: <a class="govuk-link" href="https://learn.civilservice.gov.uk/courses/f7Sf3JPkTQiwYgr2qatDEw">https://learn.civilservice.gov.uk/courses/f7Sf3JPkTQiwYgr2qatDEw</a></li>
+    </ul>
+    <p class="govuk-body">A Redbox specific training programme will be delivered to Cabinet Office colleagues starting in April 2025. This will include training sessions and short videos.</p>
+    <p class="govuk-body">Training for other departments is currently in planning stages.</p>
+    <p class="govuk-body">If you would like any bespoke training or for a demonstration then please email us at <a class="govuk-link" href="mailto:{{contact_email}}">{{ contact_email }}</a>.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">I’ve spotted an issue. What should I do?</h2>
+    <p class="govuk-body">Please email any issues to the team at <a class="govuk-link" href="mailto:{{contact_email}}">{{ contact_email }}</a>.</p>
+    <p class="govuk-body">We always encourage feedback of any kind so that we can continuously improve. There is a link to a <a class="govuk-link" href="https://www.smartsurvey.co.uk/s/EOWJ04/">feedback form</a> at the bottom of the page on Redbox.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Is it accessible to those with accessibility requirements?</h2>
+    <p class="govuk-body">We have tried to ensure that Redbox is as accessible as possible, using the <a class="govuk-link" href="https://www.w3.org/TR/WCAG22/">Web Content Accessibility Guidelines (WCAG)</a> and following best practice.</p>
+    <p class="govuk-body">We have tested for accessibility internally. We are currently completing an independent, external accessibility audit and will update this section with the results when we have them.</p>
+    {#<p class="govuk-body">We have completed an independent, external accessibility audit and are WCAG 2.2 AA compliant.</p>#}
+    <p class="govuk-body">Please refer to our <a class="govuk-link" href="{{ url('accessibility-statement') }}">accessibility statement</a> for more information.</p>
+
+    <h2 class="govuk-heading govuk-!-margin-top-7">Is Redbox biased in any way?</h2>
+    <p class="govuk-body">The answers that are given by Redbox are generated by the LLM that you have chosen. This means that any bias that is present in the LLM will also be in the answer provided.</p>
+
+  </div>
+</div>
+
+{% endblock %}
