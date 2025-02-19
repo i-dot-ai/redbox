@@ -14,6 +14,12 @@ export class UploadContainer extends RedboxElement {
       /** @type {NodeListOf<import("./document-container.mjs").DocumentContainer>} */
       const documentContainers = document.querySelectorAll("document-container");
       const lastDocumentContainer = documentContainers[documentContainers.length - 1];
+        // add tokens to the docs array
+        /** @type {NodeListOf<HTMLElement> | undefined} */ (this.querySelectorAll("[data-tokens"))?.forEach((element, index) => {
+        if (this.docs) {
+          this.docs[index].tokens = parseInt(element.dataset.tokens || "0");
+        }
+      });
       lastDocumentContainer.addDocuments(this.docs);
       this.docs = [];
     });
@@ -83,13 +89,17 @@ export class UploadContainer extends RedboxElement {
     const item = evt.target.closest("li");
     const id = item.querySelector("file-status").dataset.id;
     
+    if (!this.dataset.removeDocUrl) {
+      return;
+    }
+
     // remove from UI
     item.remove();
 
     // remove from server
     const formData = new FormData();
     formData.append('doc_id', id);
-    fetch(`/remove-doc/${id}`, {
+    fetch(this.dataset.removeDocUrl.replace("00000000-0000-0000-0000-000000000000", id), {
       method: "POST",
       headers: {
         "X-CSRFToken": this.dataset.csrftoken || "",

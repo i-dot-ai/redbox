@@ -16,7 +16,54 @@ class ChatController extends HTMLElement {
           document.querySelector("message-input")
         );
       const userText = messageInput?.getValue();
+      
+      // Prevent message sending an empty message
       if (!messageInput || !userText) {
+        return;
+      }
+
+      // Prevent message sending if there are files waiting to be processed
+      if (document.querySelectorAll('file-status [data-status]:not([data-status="complete"])').length > 0) {
+        this.#showError("<p>You have files waiting to be processed. Please wait for these to complete and then send the message again.</p>");
+        return;
+      }
+
+      // Prevent message sending if uploaded files are over the max token size
+      const maxTokens = parseInt(/** @type {HTMLInputElement} */(document.querySelector("#max-tokens")).value || "0");
+      let tokenCount = 0;
+      let fileList = "";
+      /** @type {NodeListOf<HTMLElement>} */
+      let tokenElements = document.querySelectorAll('[data-tokens]');
+      tokenElements.forEach((element) => {
+        tokenCount += parseInt(element.dataset.tokens || "0");
+        fileList += `<li><span>${element.dataset.name}: </span><span>${element.dataset.tokens} tokens</span></li>`;
+      });
+      if (tokenCount > maxTokens) {
+        const models = JSON.parse(this.dataset.models || "[]");
+        this.#showError(`
+          <p>The attached file(s) are too large. The maximum size for this chat is ${maxTokens} tokens.</p>
+          <p>You can try:</p>
+          <ul>
+            <li>Removing any files attached since the last message</li>
+            <li>Reducing the size of the files attached</li>
+            <li>Selecting a different model</li>
+          </ul>
+          <p>Current file sizes:</p>
+          <ul class="rb-token-sizes">${fileList}</ul>
+          <details>
+            <summary>Model token limits</summary>
+            <ul class="rb-token-sizes">
+              ${models.map((model) => `<li><span>${model.name}: </span><span>${model.max_tokens} tokens</li>`).join("")}
+            </ul>
+          </details>
+        `);
+        (() => {
+          let plausible = /** @type {any} */ (window).plausible;
+          if (typeof plausible === "undefined") {
+            return;
+          }
+          plausible("Token limit message shown");
+        })();
         return;
       }
 
@@ -44,7 +91,6 @@ class ChatController extends HTMLElement {
       aiMessage.stream(
         userText,
         llm,
-        this.dataset.sessionId,
         this.dataset.streamUrl || "",
         this
       );
@@ -77,23 +123,24 @@ class ChatController extends HTMLElement {
     });
 
     document.addEventListener("file-error", (evt) => {
-      this.#showFileError(/** @type{CustomEvent} */ (evt).detail.name);
+      const fileName = /** @type{CustomEvent} */ (evt).detail.name;
+      this.#showError(`<p><strong>${fileName}</strong> can't be uploaded</p><p>You can:</p><ul><li>try uploading again</li><li>check the document opens outside Redbox on your computer</li><li>report to <a href="mailto:redbox-copilot@cabinetoffice.gov.uk">Redbox support</a></li></ul>`);
     });
 
   }
 
 
   /**
-   * @param {String} fileName 
+   * @param {String} message
    */
-  #showFileError (fileName) {
+  #showError(message) {
     let errorMessage = /** @type {import("./chat-message").ChatMessage} */ (
       document.createElement("chat-message")
     );
     errorMessage.dataset.role = "ai";
     this.messageContainer?.append(errorMessage);
-    errorMessage.showError(`<p><strong>${fileName}</strong> can't be uploaded</p><p>You can:</p><ul><li>try uploading again</li><li>check the document opens outside Redbox on your computer</li><li>report to <a href="mailto:redbox-copilot@cabinetoffice.gov.uk">Redbox support</a></li></ul>`);
-  };
+    errorMessage.showError(message);
+  }
 
 }
 customElements.define("chat-controller", ChatController);

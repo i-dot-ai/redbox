@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-const { signIn } = require("./utils.js");
+const { test, expect, signIn } = require("./utils.js");
 
 test(`Clicking canned prompts updates the text input`, async ({ page }) => {
   await signIn(page);

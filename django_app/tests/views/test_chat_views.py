@@ -88,13 +88,13 @@ def test_nonexistent_chats(alice: User, client: Client):
 
 
 @pytest.mark.django_db()
-def test_post_chat_title(alice: User, chat: Chat, client: Client):
+def test_patch_chat_title(alice: User, chat: Chat, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    url = reverse("chat-titles", kwargs={"chat_id": chat.id})
-    response = client.post(url, json.dumps({"name": "New chat name"}), content_type="application/json")
+    url = reverse("chat-detail", kwargs={"chat_id": chat.id})
+    response = client.patch(url, json.dumps({"name": "New chat name"}), content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)
@@ -104,16 +104,58 @@ def test_post_chat_title(alice: User, chat: Chat, client: Client):
 
 
 @pytest.mark.django_db()
-def test_post_chat_title_with_naughty_string(alice: User, chat: Chat, client: Client):
+def test_patch_chat_title_with_naughty_string(alice: User, chat: Chat, client: Client):
     # Given
     client.force_login(alice)
 
     # When
-    url = reverse("chat-titles", kwargs={"chat_id": chat.id})
-    response = client.post(url, json.dumps({"name": "New chat name \x00"}), content_type="application/json")
+    url = reverse("chat-detail", kwargs={"chat_id": chat.id})
+    response = client.patch(url, json.dumps({"name": "New chat name \x00"}), content_type="application/json")
 
     # Then
     status = HTTPStatus(response.status_code)
-    assert status.is_success
+    assert status.is_success, response.json()
     chat.refresh_from_db()
     assert chat.name == "New chat name \ufffd"
+
+
+@pytest.mark.django_db()
+def test_patch_chat_feedback(alice: User, chat: Chat, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-detail", kwargs={"chat_id": chat.id})
+
+    payload = {
+        "feedback_achieved": True,
+        "feedback_saved_time": False,
+        "feedback_improved_work": True,
+        "feedback_notes": "hello",
+    }
+    response = client.patch(url, json.dumps(payload), content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success, response.json()
+    chat.refresh_from_db()
+    assert chat.feedback_achieved == payload["feedback_achieved"]
+    assert chat.feedback_saved_time == payload["feedback_saved_time"]
+    assert chat.feedback_improved_work == payload["feedback_improved_work"]
+    assert chat.feedback_notes == payload["feedback_notes"]
+
+
+@pytest.mark.django_db()
+def test_delete_chat(alice: User, chat: Chat, client: Client):
+    # Given
+    client.force_login(alice)
+
+    # When
+    url = reverse("chat-detail", kwargs={"chat_id": chat.id})
+
+    response = client.delete(url, content_type="application/json")
+
+    # Then
+    status = HTTPStatus(response.status_code)
+    assert status.is_success, response.json()
+    assert not Chat.objects.filter(pk=chat.pk).exists()

@@ -224,3 +224,35 @@ variable "publicly_accessible" {
   description = "Flag to determine if the database is publicly accessible"
 }
 
+
+variable "message_throttle_seconds_max" {
+  type        = number
+  default     = 10
+  description = "upper bound by which a message can be throttled"
+}
+
+variable "message_throttle_seconds_min" {
+  type        = number
+  default     = 1
+  description = "lower bound by which a message can be throttled"
+}
+
+variable "message_throttle_rate" {
+  type        = number
+  default     = 0.1
+  description = "message throttling rate"
+}
+
+variable "allowed_email_domains" {
+  type        = string
+  default     = ".gov.uk"
+  description = "comma separated list of email domains"
+}
+
+
+variable "google_application_credentials_json" {
+  type = string
+  sensitive = true
+  default = null
+  description = "google application credentials for vertex-ai"
+}

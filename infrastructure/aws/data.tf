@@ -40,6 +40,12 @@ locals {
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
     "DEBUG" : terraform.workspace == "dev",
+
+    "MESSAGE_THROTTLE_SECONDS_MAX": var.message_throttle_seconds_max,
+    "MESSAGE_THROTTLE_SECONDS_MIN": var.message_throttle_seconds_min,
+    "MESSAGE_THROTTLE_RATE": var.message_throttle_rate,
+
+    "ALLOWED_EMAIL_DOMAINS": var.allowed_email_domains,
   }
 
   litellm_environment_variables = {
@@ -61,8 +67,7 @@ locals {
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
     "OPENAI_API_VERSION": var.openai_api_version,
-
-
+    "GOOGLE_APPLICATION_CREDENTIALS_JSON": var.google_application_credentials_json,
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,

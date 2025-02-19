@@ -44,14 +44,14 @@ class ExitFeedback extends HTMLElement {
               <legend>Did Redbox help save you time?</legend>
             </div>
             <div class="exit-feedback__radio-container">
-              <input type="radio" id="exit-feedback__input-time-yes" name="saved_time" value="Yes"/>
+              <input type="radio" id="exit-feedback__input-time-yes" name="feedback_saved_time" value="Yes"/>
               <label for="exit-feedback__input-time-yes">
                 ${thumbIcon("up")}
                 <span class="govuk-visually-hidden">Yes</span>
               </label>
             </div>
             <div class="exit-feedback__radio-container">
-              <input type="radio" id="exit-feedback__input-time-no" name="saved_time" value="No"/>
+              <input type="radio" id="exit-feedback__input-time-no" name="feedback_saved_time" value="No"/>
               <label for="exit-feedback__input-time-no">
                 ${thumbIcon("down")}
                 <span class="govuk-visually-hidden">No</span>
@@ -63,14 +63,14 @@ class ExitFeedback extends HTMLElement {
               <legend>Did Redbox help to improve your work?</legend>
             </div>
             <div class="exit-feedback__radio-container">
-              <input type="radio" id="exit-feedback__input-improve-work-yes" name="improved_work" value="Yes"/>
+              <input type="radio" id="exit-feedback__input-improve-work-yes" name="feedback_improved_work" value="Yes"/>
               <label for="exit-feedback__input-improve-work-yes">
                 ${thumbIcon("up")}
                 <span class="govuk-visually-hidden">Yes</span>
               </label>
             </div>
             <div class="exit-feedback__radio-container">
-              <input type="radio" id="exit-feedback__input-improve-work-no" name="improved_work" value="No"/>
+              <input type="radio" id="exit-feedback__input-improve-work-no" name="feedback_improved_work" value="No"/>
               <label for="exit-feedback__input-improve-work-no">
                 ${thumbIcon("down")}
                 <span class="govuk-visually-hidden">No</span>
@@ -78,7 +78,7 @@ class ExitFeedback extends HTMLElement {
             </div>
           </fieldset>
           <label class="govuk-!-display-block govuk-!-margin-bottom-1 govuk-!-margin-top-2" for="exit-feedback__input-notes">Do you want to tell us anything more?</label>
-          <textarea class="exit-feedback__input-notes govuk-textarea govuk-!-margin-bottom-3" id="exit-feedback__input-notes" name="notes" rows="1"></textarea>
+          <textarea class="exit-feedback__input-notes govuk-textarea govuk-!-margin-bottom-3" id="exit-feedback__input-notes" name="feedback_notes" rows="1"></textarea>
           <button type="button" class="exit-feedback__send-button govuk-button">Send</button>
         </div>
         <div class="exit-feedback__page">
@@ -157,7 +157,7 @@ class ExitFeedback extends HTMLElement {
     this.querySelector(".exit-feedback__button--yes")?.addEventListener(
       "click",
       () => {
-        this.formData.set("achieved", "Yes");
+        this.formData.set("feedback_achieved", "Yes");
         this.#changePage(1);
         this.#sendFeedback();
       }
@@ -165,7 +165,7 @@ class ExitFeedback extends HTMLElement {
     this.querySelector(".exit-feedback__button--no")?.addEventListener(
       "click",
       () => {
-        this.formData.set("achieved", "No");
+        this.formData.set("feedback_achieved", "No");
         this.#changePage(1);
         this.#sendFeedback();
       }
@@ -223,9 +223,12 @@ class ExitFeedback extends HTMLElement {
   }
 
   async #sendFeedback() {
+    if (!this.dataset.updateUrl) {
+      return;
+    }
     try {
-      await fetch(`/chats/${this.dataset.chatid}/update-chat-feedback`, {
-        method: "POST",
+      await fetch(this.dataset.updateUrl, {
+        method: "PATCH",
         headers: {
           "X-CSRFToken": this.dataset.csrf || "",
         },

@@ -16,6 +16,7 @@ class ChatLLMBackendAdmin(admin.ModelAdmin):
         "name",
         "provider",
         "is_default",
+        "enabled",
     ]
 
     class Meta:
@@ -148,8 +149,8 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["short_text", "role", "get_user", "chat", "route", "created_at"]
-    list_filter = ["role", "route", "chat__user"]
+    list_display = ["short_text", "role", "get_user", "chat", "created_at"]
+    list_filter = ["role", "chat__user"]
     date_hierarchy = "created_at"
     search_fields = ["chat__user__email"]
 
@@ -165,16 +166,15 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
 class FileInline(admin.StackedInline):
     model = models.File
     ordering = ("modified_at",)
-    extra = 1
+    extra = 0
 
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
-    ordering = ("modified_at",)
-    fields = ["text", "role", "route", "rating"]
-    readonly_fields = ["text", "role", "route", "rating"]
-    extra = 1
-    show_change_link = True  # allows users to click through to look at Citations
+    ordering = ("created_at",)
+    fields = ["id", "created_at", "text", "role", "rating", "delay"]
+    readonly_fields = ["id", "created_at", "text", "role", "rating", "delay"]
+    extra = 0
 
 
 class ChatAdmin(ExportMixin, admin.ModelAdmin):
@@ -208,11 +208,11 @@ class ChatAdmin(ExportMixin, admin.ModelAdmin):
 
 
 class FileAdmin(ExportMixin, admin.ModelAdmin):
-    list_display = ["file_name", "user", "status", "created_at", "last_referenced"]
-    list_filter = ["user", "status"]
+    list_display = ["file_name", "chat__user", "token_count", "status", "created_at"]
+    list_filter = ["chat__user", "status"]
     date_hierarchy = "created_at"
     actions = ["reupload"]
-    search_fields = ["user__email"]
+    search_fields = ["chat__user__email", "file_name"]
 
 
 admin.site.register(User, UserAdmin)

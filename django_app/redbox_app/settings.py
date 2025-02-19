@@ -391,3 +391,18 @@ LIT_SSR_URL = env.str("LIT_SSR_URL", "localhost")
 
 LITELLM_MASTER_KEY = os.environ["LITELLM_MASTER_KEY"]
 LITELLM_URL = f"http://{os.environ["LITELLM_URL"]}:4000"
+
+MESSAGE_THROTTLE_SECONDS_MIN = env.int("MESSAGE_THROTTLE_SECONDS_MIN", 1)
+MESSAGE_THROTTLE_SECONDS_MAX = env.int("MESSAGE_THROTTLE_SECONDS_MAX", 10)
+MESSAGE_THROTTLE_RATE = env.float("MESSAGE_THROTTLE_RATE", 0.1)
+
+ALLOWED_EMAIL_DOMAINS = [domain.strip() for domain in env.str("ALLOWED_EMAIL_DOMAINS", ".gov.uk").split(",")]
+
+
+if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
+    file_path = Path.home() / "google-application-credentials"
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(file_path)
+    with Path.open(file_path, "w") as f:
+        f.write(credentials)
+
+METRICS_FILE_NAME = "metrics.csv"

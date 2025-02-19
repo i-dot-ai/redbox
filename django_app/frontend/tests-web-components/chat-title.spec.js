@@ -1,11 +1,11 @@
-import { test, expect } from "@playwright/test";
-const { sendMessage, signIn } = require("./utils.js");
+const { test, expect, sendMessage, signIn } = require("./utils.js");
+
 
 test(`Chat title functionality works as expected`, async ({ page }) => {
   await signIn(page);
 
   // There is a hidden chat title for new chats
-  const chatTitle = page.locator(".chat-title__heading");
+  let chatTitle = page.locator(".chat-title__heading");
   await expect(chatTitle).toContainText("Current chat");
   await expect(chatTitle).toHaveClass(/govuk-visually-hidden/);
 
@@ -21,4 +21,11 @@ test(`Chat title functionality works as expected`, async ({ page }) => {
   await textInput.fill("Updated chat title");
   await textInput.press("Enter");
   await expect(chatTitle).toContainText("Updated chat title");
+
+  // The title is saved
+  await page.waitForTimeout(500);
+  await page.reload();
+  chatTitle = page.locator(".chat-title__heading");
+  await expect(chatTitle).toContainText("Updated chat title");
+
 });

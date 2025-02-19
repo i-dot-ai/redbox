@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-const { sendMessage, signIn } = require("./utils.js");
+const { test, expect, signIn } = require("./utils.js");
+
 
 test(`Markdown can be converted to HTML`, async ({ page }) => {
   await signIn(page);
@@ -8,7 +8,9 @@ test(`Markdown can be converted to HTML`, async ({ page }) => {
   await page.evaluate(() => {
     let converter = document.createElement("markdown-converter");
     document.body.appendChild(converter);
-    converter.update("# Test heading");
+    window.setTimeout(() => {
+      converter.update("# Test heading");
+    }, 1);
   });
   await expect(page.locator("markdown-converter h3")).toHaveText("Test heading");
 

@@ -1,6 +1,6 @@
 // @ts-check
 
-import "../loading-message.js";
+import "../loading-message.mjs";
 
 export class ChatMessage extends HTMLElement {
   constructor() {
@@ -10,7 +10,12 @@ export class ChatMessage extends HTMLElement {
   }
 
   connectedCallback() {
-    this.uuid = crypto.randomUUID();
+    
+    /**
+     * A random UUID for UI elements - this is not the Django message ID
+     */
+    const uuid = crypto.randomUUID();
+    
     this.innerHTML = `
       <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="${
         this.dataset.role
@@ -29,9 +34,9 @@ export class ChatMessage extends HTMLElement {
               `
               : ""
           }
-          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${this.uuid}" data-module="govuk-notification-banner" hidden>
+          <div class="govuk-notification-banner govuk-notification-banner--error govuk-!-margin-bottom-3 govuk-!-margin-top-3" role="alert" aria-labelledby="notification-title-${uuid}" data-module="govuk-notification-banner" hidden>
               <div class="govuk-notification-banner__header">
-                  <h3 class="govuk-notification-banner__title" id="notification-title-${this.uuid}">Error</h3>
+                  <h3 class="govuk-notification-banner__title" id="notification-title-${uuid}">Error</h3>
               </div>
               <div class="govuk-notification-banner__content">
                   <p class="govuk-notification-banner__heading"></p>
@@ -62,14 +67,12 @@ export class ChatMessage extends HTMLElement {
    * Streams an LLM response
    * @param {string} message
    * @param {string} llm
-   * @param {string | undefined} sessionId
    * @param {string} endPoint
    * @param {HTMLElement} chatControllerRef
    */
   stream = (
     message,
     llm,
-    sessionId,
     endPoint,
     chatControllerRef
   ) => {
@@ -103,7 +106,6 @@ export class ChatMessage extends HTMLElement {
       webSocket.send(
         JSON.stringify({
           message: message,
-          sessionId: sessionId,
           llm: llm,
         })
       );
@@ -148,7 +150,7 @@ export class ChatMessage extends HTMLElement {
         chatControllerRef.dataset.sessionId = response.data;
       } else if (response.type === "end") {
         let chatMessageFooter = document.createElement("chat-message-footer");
-        chatMessageFooter.dataset.id = this.uuid;
+        chatMessageFooter.dataset.id = response.data.message_id;
         this.parentElement?.appendChild(chatMessageFooter);
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {
@@ -167,6 +169,10 @@ export class ChatMessage extends HTMLElement {
         );
         if (errorContentContainer) {
           errorContentContainer.innerHTML = response.data;
+        }
+      } else if (response.type === "info") {
+        if (this.loadingMessage) {
+          this.loadingMessage.dataset.message = response.data;
         }
       }
 

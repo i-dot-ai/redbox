@@ -71,6 +71,17 @@ def llm_backend(db):  # noqa: ARG001
 
 
 @pytest.fixture()
+def big_llm_backend():
+    big_llm, _ = ChatLLMBackend.objects.get_or_create(
+        name="big-llm",
+        provider="azure_openai",
+        is_default=False,
+        context_window_size=1_000_000,
+    )
+    return big_llm
+
+
+@pytest.fixture()
 def create_user():
     def _create_user(
         email,
@@ -164,7 +175,7 @@ def chat_with_message(chat: Chat) -> Chat:
 
 @pytest.fixture()
 def chat_message(chat: Chat) -> ChatMessage:
-    return ChatMessage.objects.create(chat=chat, text="A question?", role=ChatMessage.Role.user, route="A route")
+    return ChatMessage.objects.create(chat=chat, text="A question?", role=ChatMessage.Role.user)
 
 
 @pytest.fixture()
@@ -176,17 +187,30 @@ def chat_message_with_citation(chat: Chat) -> ChatMessage:
         rating=3,
         rating_chips=["apple", "pear"],
         rating_text="not bad",
-        route="chat",
     )
 
 
 @pytest.fixture()
-def uploaded_file(alice: User, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
+def uploaded_file(chat: Chat, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
     file = File.objects.create(
-        user=alice,
+        chat=chat,
         original_file=original_file,
         last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
         status=File.Status.processing,
+    )
+    file.save()
+    yield file
+    file.delete()
+
+
+@pytest.fixture()
+def large_file(chat: Chat, original_file: UploadedFile, s3_client) -> File:  # noqa: ARG001
+    file = File.objects.create(
+        chat=chat,
+        original_file=original_file,
+        last_referenced=datetime.now(tz=UTC) - timedelta(days=14),
+        status=File.Status.processing,
+        token_count=150_000,
     )
     file.save()
     yield file
@@ -209,20 +233,20 @@ def chat_with_files(chat: Chat, several_files: Sequence[File]) -> Chat:
         chat=chat,
         text="An answer.",
         role=ChatMessage.Role.ai,
-        route="search",
     )
-    chat_message_2 = ChatMessage.objects.create(
+    ChatMessage.objects.create(
         chat=chat,
         text="A second question?",
         role=ChatMessage.Role.user,
     )
-    chat_message_2.selected_files.set(several_files[0:2])
     ChatMessage.objects.create(
         chat=chat,
         text="A second answer.",
         role=ChatMessage.Role.ai,
-        route="search",
     )
+    for file in several_files[2:]:
+        file.chat = chat
+        file.save()
     return chat
 
 
@@ -266,13 +290,13 @@ def user_with_chats_with_messages_over_time(alice: User) -> User:
 
 
 @pytest.fixture()
-def several_files(alice: User, number_to_create: int = 4) -> Sequence[File]:
+def several_files(chat: Chat, number_to_create: int = 4) -> Sequence[File]:
     files = []
     for i in range(number_to_create):
         filename = f"original_file_{i}.txt"
         files.append(
             File.objects.create(
-                user=alice,
+                chat=chat,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 status=File.Status.complete,
                 token_count=i * 100,
@@ -291,13 +315,12 @@ def chat_message_with_rating(chat_message: ChatMessage) -> ChatMessage:
 
 
 @pytest.fixture()
-def mix_of_file_statues(alice: User, chat) -> Sequence[File]:
+def mix_of_file_statues(chat: Chat) -> Sequence[File]:
     files = []
     for status in File.Status.complete, File.Status.processing:
         filename = f"original_file_{status}.txt"
         files.append(
             File.objects.create(
-                user=alice,
                 original_file=SimpleUploadedFile(filename, b"Lorem Ipsum."),
                 status=status,
                 token_count=100,

@@ -49,9 +49,9 @@ class Signup1(AbstractSignup):
 
         # Only allow .gov.uk email accounts
         email = request.POST.get("email")
-        allowed_emails = ".gov.uk", "@covid19.public-inquiry.uk"
+        allowed_emails = settings.ALLOWED_EMAIL_DOMAINS
         if not any(email.endswith(allowed_email) for allowed_email in allowed_emails):
-            form.add_error("email", "The email must be a valid gov.uk email account")
+            form.add_error("email", "The email must be a valid email account")
 
         if form.is_valid():
             request.session["sign_up_data"] = form.cleaned_data

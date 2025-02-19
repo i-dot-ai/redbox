@@ -70,6 +70,26 @@ class Settings(BaseSettings):
     dev_mode: bool = False
     superuser_email: str | None = None
 
+    system_prompt_template: str = """You are Redbox, an AI assistant to civil servants in the United Kingdom.
+
+You follow instructions and respond to queries accurately and concisely, and are professional in all your
+interactions with users. You use British English spellings and phrases rather than American English.
+
+If you are provided with documents you use those as primary sources for information and use them to respond to the users queries
+"""
+
+    question_prompt_template: str = """
+{% if documents is defined and documents|length > 0 %}
+Documents:
+{% for d in documents %}
+Title: {{d.metadata.get("uri", "unknown document")}}
+{{d.page_content}}
+
+{% endfor %}
+{% endif %}
+Question: {{messages[-1].content}}
+"""
+
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
     @property
@@ -134,7 +154,7 @@ class Settings(BaseSettings):
                 region_name=self.aws_region,
             )
 
-        msg = f"unkown object_store={self.object_store}"
+        msg = f"unknown object_store={self.object_store}"
         raise NotImplementedError(msg)
 
 

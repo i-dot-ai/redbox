@@ -5,7 +5,7 @@ import { RedboxElement } from "../redbox-element.mjs";
 export class ModelSelector extends RedboxElement {
 
   static properties = {
-    options: { type: Array, attribute: "data-options" },
+    options: { type: Array, attribute: "data-models" },
     expanded: { type: Boolean, state: true },
     selectedOption: {type: Number, state: true},
     activeOption: {type: Number, state: true} // this is the currently highlighted option when using keyboard, so can be different to selectedOption
@@ -45,6 +45,7 @@ export class ModelSelector extends RedboxElement {
           `)}
         </div>
         <input type="hidden" id="llm-selector" name="llm" value=${this.options[this.selectedOption].id}/>
+        <input type="hidden" id="max-tokens" value=${this.options[this.selectedOption].max_tokens}/>
       `;
     }
     return html`
@@ -69,6 +70,16 @@ export class ModelSelector extends RedboxElement {
     this.selectedOption = parseInt(option.dataset.index);
     this.activeOption = this.selectedOption;
     this.expanded = false;
+    (() => {
+      let plausible = /** @type {any} */ (window).plausible;
+      if (typeof plausible === "undefined") {
+        return;
+      }
+      plausible("Model changed", { props: { model: this.options[this.selectedOption].name } });
+      if (document.querySelectorAll(".rb-token-sizes").length > 0) {
+        plausible("Model changed following token limit message");
+      }
+    })();
   }
 
   #selectOptionByLetter(letter) {
@@ -117,7 +128,7 @@ export class ModelSelector extends RedboxElement {
   #blur() {
     window.setTimeout(() => {
       this.expanded = false;
-    }, 100);
+    }, 200);
   }
 
 }

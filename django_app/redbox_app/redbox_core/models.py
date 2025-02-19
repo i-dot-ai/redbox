@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import os
 import textwrap
@@ -7,21 +6,24 @@ from collections.abc import Collection, Sequence
 from datetime import UTC, date, datetime, timedelta
 from typing import override
 
-import elastic_transport
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
 from django.db import models
-from django.db.models import Max, Min, UniqueConstraint
+from django.db.models import Avg, Count, Max, Min, Sum, UniqueConstraint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from pytz import utc
 
+import redbox.models.chain
 from redbox.chains.components import get_tokeniser
 from redbox.models.settings import get_settings
+from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
 from redbox_app.worker import ingest
 
@@ -39,11 +41,6 @@ def escape_curly_brackets(text: str) -> str:
 class UUIDPrimaryKeyBase(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    class Meta:
-        abstract = True
-
-
-class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     modified_at = models.DateTimeField(editable=False, auto_now=True)
 
@@ -81,6 +78,7 @@ class ChatLLMBackend(models.Model):
     enabled = models.BooleanField(default=True, help_text="is this model enabled.")
     display = models.CharField(max_length=128, null=True, blank=True, help_text="name to display in UI.")
     context_window_size = models.PositiveIntegerField(help_text="size of the LLM context window")
+    rate_limit = models.PositiveIntegerField(default=1000000, help_text="tokens per minute allowed by this model")
 
     class Meta:
         constraints = [UniqueConstraint(fields=["name", "provider"], name="unique_name_provider")]
@@ -92,6 +90,10 @@ class ChatLLMBackend(models.Model):
         if self.is_default:
             ChatLLMBackend.objects.filter(is_default=True).update(is_default=False)
         super().save(*args, **kwargs)
+
+    @classmethod
+    def active_context_window_sizes(cls) -> dict[str, int]:
+        return {str(o): o.context_window_size for o in cls.objects.filter(enabled=True)}
 
 
 class User(BaseUser, UUIDPrimaryKeyBase):
@@ -162,6 +164,14 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _("Crown Commercial Service")
         CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _("CS Modernisation and Reform Unit")
         DELIVERY_GROUP = "Delivery Group", _("Delivery Group")
+        DSIT_DATA_SCIENCE_AND_TRANSFORMATION = (
+            "DSIT Data Science & Data Transformation",
+            _("DSIT Data Science & Data Transformation"),
+        )
+        DSIT_MEDIA_AND_DIGITAL = "DSIT Media & Digital", _("DSIT Media & Digital")
+        DSIT_STRATEGIC_ENGAGEMENT = "DSIT Strategic Engagement", _("DSIT Strategic Engagement")
+        DSIT_STRATEGY_PLANNING_INSIGHTS = "DSIT Strategy, Planning & Insights", _("DSIT Strategy, Planning & Insights")
+        DSIT_TRANSFORMATION = "DSIT Transformation", _("DSIT Transformation")
         ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
         EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
             "Equality and Human Rights Commission",
@@ -407,7 +417,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
             return ""
 
 
-class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
+class Chat(UUIDPrimaryKeyBase):
     name = models.TextField(max_length=1024, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
@@ -439,6 +449,9 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
         if self.temperature is None:
             self.temperature = 0
 
+        for chat_message in self.chatmessage_set.all():
+            chat_message.log()
+
         super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
@@ -462,6 +475,29 @@ class Chat(UUIDPrimaryKeyBase, TimeStampedModel):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
+    def to_langchain(self) -> redbox.models.chain.RedboxState:
+        chat_backend = redbox.models.chain.ChatLLMBackend(
+            name=self.chat_backend.name,
+            provider=self.chat_backend.provider,
+            description=self.chat_backend.description,
+            context_window_size=self.chat_backend.context_window_size,
+        )
+
+        return redbox.models.chain.RedboxState(
+            documents=[Document(str(f.text), metadata={"uri": f.original_file.name}) for f in self.file_set.all()],
+            messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
+            chat_backend=chat_backend,
+        )
+
+    def context_window_size(self) -> int:
+        return self.chat_backend.context_window_size
+
+    def token_count(self) -> int:
+        def f(obj):
+            return obj.aggregate(Sum("token_count"))["token_count__sum"] or 0
+
+        return f(self.file_set) + f(self.chatmessage_set)
+
 
 class InactiveFileError(ValueError):
     def __init__(self, file):
@@ -474,10 +510,10 @@ def build_s3_key(instance, filename: str) -> str:
     1. an existing file that they own, then it is overwritten
     2. an existing file that another user owns then a new file is created
     """
-    return f"{instance.user.email}/{filename}"
+    return f"{instance.chat.user.email}/{filename}"
 
 
-class File(UUIDPrimaryKeyBase, TimeStampedModel):
+class File(UUIDPrimaryKeyBase):
     class Status(models.TextChoices):
         complete = "complete"
         errored = "errored"
@@ -488,7 +524,6 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         storage=settings.STORAGES["default"]["BACKEND"],
         upload_to=build_s3_key,
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     last_referenced = models.DateTimeField(blank=True, null=True)
     ingest_error = models.TextField(
         max_length=2048,
@@ -499,9 +534,7 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(
         Chat,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        help_text="chat that this document belongs to, which may be nothing for now",
+        help_text="chat that this document belongs to",
     )
     text = models.TextField(null=True, blank=True, help_text="text extracted from file")
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in extracted text")
@@ -578,11 +611,11 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         self.save()
 
     @classmethod
-    def get_completed_and_processing_files(cls, user: User) -> tuple[Sequence["File"], Sequence["File"]]:
+    def get_completed_and_processing_files(cls, chat_id: uuid.UUID) -> tuple[Sequence["File"], Sequence["File"]]:
         """Returns all files that are completed and processing for a given user."""
 
-        completed_files = cls.objects.filter(user=user, status=File.Status.complete).order_by("-created_at")
-        processing_files = cls.objects.filter(user=user, status=File.Status.processing).order_by("-created_at")
+        completed_files = cls.objects.filter(chat_id=chat_id, status=File.Status.complete).order_by("-created_at")
+        processing_files = cls.objects.filter(chat_id=chat_id, status=File.Status.processing).order_by("-created_at")
         return completed_files, processing_files
 
     @classmethod
@@ -595,12 +628,12 @@ class File(UUIDPrimaryKeyBase, TimeStampedModel):
         )
 
     def position_in_queue(self) -> int:
-        if not self.task:
+        if not self.task_id:
             return -1
         return OrmQ.objects.filter(lock__lt=self.task.lock).count()
 
 
-class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
+class ChatMessage(UUIDPrimaryKeyBase):
     class Role(models.TextChoices):
         ai = "ai"
         user = "user"
@@ -609,9 +642,6 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     text = models.TextField(max_length=32768, null=False, blank=False)
     role = models.CharField(choices=Role.choices, null=False, blank=False)
-    route = models.CharField(max_length=25, null=True, blank=True)
-    selected_files = models.ManyToManyField(File, related_name="+", symmetrical=False, blank=True)
-    source_files = models.ManyToManyField(File, related_name="+")
 
     rating = models.PositiveIntegerField(
         blank=True,
@@ -621,15 +651,32 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
     rating_text = models.TextField(blank=True, null=True)
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the message")
+    delay = models.FloatField(default=0, help_text="by how much was this message delayed in seconds")
 
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
 
-    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.text = sanitise_string(self.text)
         self.rating_text = sanitise_string(self.rating_text)
-        self.token_count = len(tokeniser.encode(self.text))
-        super().save(*args, force_insert, force_update, using, update_fields)
+        self.token_count = self.associated_file_token_count + len(tokeniser.encode(self.text))
+        super().save(force_insert, force_update, using, update_fields)
+        self.log()
+
+    @property
+    def associated_file_token_count(self):
+        """count token of all files created before this chat
+        that would have been used in the creation of this message
+        """
+        if self.role == self.Role.ai:
+            return 0
+
+        return (
+            self.chat.file_set.filter(
+                created_at__lt=datetime.now(tz=utc),
+            ).aggregate(Sum("token_count"))["token_count__sum"]
+            or 0
+        )
 
     @classmethod
     def get_messages(cls, chat_id: uuid.UUID) -> Sequence["ChatMessage"]:
@@ -642,6 +689,7 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
         return HumanMessage(content=escape_curly_brackets(self.text))
 
     def log(self):
+        n_selected_files = self.chat.file_set.count()
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
@@ -652,20 +700,101 @@ class ChatMessage(UUIDPrimaryKeyBase, TimeStampedModel):
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
-            "text": str(self.text),
-            "route": str(self.route),
-            "role": str(self.role),
+            "route": "chat_with_docs" if n_selected_files else "chat",
+            "role": self.role,
             "token_count": self.token_count,
             "rating": int(self.rating) if self.rating else None,
             "rating_text": str(self.rating_text),
             "rating_chips": list(map(str, self.rating_chips)) if self.rating_chips else None,
+            "chat_feedback_achieved": self.chat.feedback_achieved,
+            "chat_feedback_saved_time": self.chat.feedback_saved_time,
+            "chat_feedback_improved_work": self.chat.feedback_improved_work,
+            "n_selected_files": n_selected_files,
+            "delay_seconds": self.delay,
         }
         if es_client := env.elasticsearch_client():
-            try:
-                es_client.create(
-                    index=env.elastic_chat_mesage_index,
-                    id=uuid.uuid4(),
-                    document=elastic_log_msg,
-                )
-            except elastic_transport.ConnectionError:
-                contextlib.suppress(elastic_transport.ConnectionError)
+            es_client.create(
+                index=env.elastic_chat_mesage_index,
+                id=uuid.uuid4(),
+                document=elastic_log_msg,
+            )
+
+    @classmethod
+    def metrics(cls):
+        return cls.objects.values(
+            "chat__user__business_unit",
+            "chat__user__grade",
+            "chat__user__profession",
+            "chat__user__ai_experience",
+            "created_at__date",
+        ).annotate(
+            token_count__avg=Avg("token_count"),
+            rating__avg=Avg("rating"),
+            delay__avg=Avg("delay"),
+            id__count=Count("id", distinct=True),
+            n_selected_files__count=Count("chat__file", distinct=True),
+            chat_id__count=Count("chat", distinct=True),
+            user_id__count=Count("chat__user", distinct=True),
+        )
+
+
+def get_unique_chat_title(title: str, user: User, number: int = 0) -> str:
+    original_title = sanitise_string(title[: settings.CHAT_TITLE_LENGTH])
+    new_title = original_title
+    if number > 0:
+        new_title = f"{original_title} ({number})"
+    if Chat.objects.filter(name=new_title, user=user).exists():
+        return get_unique_chat_title(original_title, user, number + 1)
+    return new_title
+
+
+def get_chat_session(user: User, chat_id: uuid.UUID, data: dict) -> tuple[Chat, float]:
+    """create or update a Chat, and return a delay (seconds) to handle large traffic"""
+    chat = Chat.objects.get(id=chat_id)
+
+    if chat_backend_id := data.get("llm"):
+        chat.chat_backend = ChatLLMBackend.objects.get(id=chat_backend_id)
+        chat.save()
+
+    if temperature := data.get("temperature", 0):
+        chat.temperature = temperature
+        chat.save()
+
+    # Update session name if this is the first message
+    if not chat.chatmessage_set.exists():
+        chat.name = get_unique_chat_title(data.get("message", ""), user)
+        chat.save()
+
+    token_count_this_message = chat.token_count()
+
+    active_context_window_sizes = ChatLLMBackend.active_context_window_sizes()
+
+    if token_count_this_message > max(active_context_window_sizes.values()):
+        raise ValueError(error_messages.FILES_TOO_LARGE)
+
+    if token_count_this_message > chat.context_window_size():
+        details = "\n".join(
+            f"* `{k}`: {v} tokens" for k, v in active_context_window_sizes.items() if v >= token_count_this_message
+        )
+        msg = f"{error_messages.FILES_TOO_LARGE}.\nTry one of the following models:\n{details}"
+        raise ValueError(msg)
+
+    ChatMessage.objects.create(
+        chat=chat,
+        text=data.get("message", ""),
+        role=ChatMessage.Role.user,
+    )
+
+    tokens_used_in_last_min = (
+        ChatMessage.objects.filter(
+            chat__chat_backend=chat.chat_backend,
+            created_at__gt=datetime.now(tz=utc) - timedelta(minutes=1),
+        ).aggregate(Sum("token_count"))["token_count__sum"]
+        or 0
+    )
+
+    delay = token_count_this_message / (chat.chat_backend.rate_limit - tokens_used_in_last_min)
+
+    delay = max(delay, 0)  # should never happen but just in case!
+
+    return chat, delay * 60

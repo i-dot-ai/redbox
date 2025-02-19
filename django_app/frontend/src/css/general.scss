@@ -105,6 +105,14 @@ body {
 .govuk-link:visited {
   color: var(--iai-product-colour);
 }
+@media (max-width: 1019px) {
+  .iai-footer__list {
+    margin-top: 0.5rem;
+  }
+  .iai-footer__list-item {
+    margin-top: 0.25rem;
+  }
+}
 
 @import "./profile.scss";
 

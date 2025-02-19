@@ -5,9 +5,11 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 from magic_link import urls as magic_link_urls
+from rest_framework import routers
 
-from .redbox_core import views
-from .redbox_core.views import api_views
+from redbox_app.redbox_core import views
+from redbox_app.redbox_core.views import api_views
+from redbox_app.redbox_core.views.api_views import ChatViewSet, rate_chat_message
 
 admin.site = AdminSitePlus()
 admin.autodiscover()
@@ -33,6 +35,7 @@ if settings.LOGIN_METHOD == "sso":
 
 info_urlpatterns = [
     path("privacy-notice/", views.info_views.privacy_notice_view, name="privacy-notice"),
+    path("cookies/", views.cookies_view, name="cookies"),
     path(
         "accessibility-statement/",
         views.accessibility_statement_view,
@@ -41,19 +44,16 @@ info_urlpatterns = [
     path("support/", views.support_view, name="support"),
 ]
 
-file_urlpatterns = [
-    path("upload/", views.UploadView.as_view(), name="upload"),
-    path("upload/<uuid:chat_id>/", views.UploadView.as_view(), name="upload"),
-    path("remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
-]
+router = routers.DefaultRouter()
+router.register(r"chat", ChatViewSet, basename="chat")
 
 chat_urlpatterns = [
-    path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
     path("chats/", views.ChatsViewNew.as_view(), name="chats"),
-    path("chat/<uuid:chat_id>/title/", views.ChatsTitleView.as_view(), name="chat-titles"),
-    path("ratings/<uuid:message_id>/", views.RatingsView.as_view(), name="ratings"),
-    path("chats/<uuid:chat_id>/update-chat-feedback", views.UpdateChatFeedback.as_view(), name="chat-feedback"),
-    path("chats/<uuid:chat_id>/delete-chat", views.DeleteChat.as_view(), name="chat-delete"),
+    path("chats/<uuid:chat_id>/", views.ChatsView.as_view(), name="chats"),
+    path("chats/<uuid:chat_id>/upload", views.UploadView.as_view(), name="upload"),
+    path("chats/<uuid:chat_id>/remove-doc/<uuid:doc_id>", views.remove_doc_view, name="remove-doc"),
+    path("ratings/<uuid:message_id>/", rate_chat_message, name="ratings"),
+    path("chats/<uuid:chat_id>/message", views.ChatMessageView.as_view(), name="chat-message"),
 ]
 
 admin_urlpatterns = [
@@ -70,21 +70,17 @@ other_urlpatterns = [
     path(".well-known/security.txt", views.SecurityTxtRedirectView.as_view(), name="security.txt"),
     path("security", views.SecurityTxtRedirectView.as_view(), name="security"),
     path("sitemap", views.misc_views.sitemap_view, name="sitemap"),
+    path("download-metrics/", views.download_metrics, name="download-metrics"),
 ]
 
 
 api_url_patterns = [
     path("api/v0/file/", api_views.file_upload, name="file-upload"),
+    path("api/v0/", include(router.urls), name="chat"),
 ]
 
 urlpatterns = (
-    info_urlpatterns
-    + other_urlpatterns
-    + auth_urlpatterns
-    + chat_urlpatterns
-    + file_urlpatterns
-    + admin_urlpatterns
-    + api_url_patterns
+    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + admin_urlpatterns + api_url_patterns
 )
 
 if settings.DEBUG:

@@ -1,12 +1,8 @@
 import logging
 import uuid
-from collections.abc import Sequence
-from dataclasses import dataclass
-from http import HTTPStatus
 from itertools import groupby
 from operator import attrgetter
 
-from dataclasses_json import Undefined, dataclass_json
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -44,12 +40,11 @@ class ChatsView(View):
             scheme=settings.WEBSOCKET_SCHEME,
             host="localhost" if settings.ENVIRONMENT.is_test else settings.ENVIRONMENT.hosts[0],
             port=int(request.META["SERVER_PORT"]) if settings.ENVIRONMENT.is_test else None,
-            path=r"/ws/chat/",
+            path=f"/ws/chat/{chat_id}",
         )
 
-        completed_files, processing_files = File.get_completed_and_processing_files(request.user)
+        completed_files, processing_files = File.get_completed_and_processing_files(chat_id)
 
-        self.decorate_selected_files(completed_files, messages)
         chat_grouped_by_date_group = groupby(all_chats, attrgetter("date_group"))
 
         chat_backend = current_chat.chat_backend if current_chat else ChatLLMBackend.objects.get(is_default=True)
@@ -71,8 +66,9 @@ class ChatsView(View):
                     "selected": chat_llm_backend == chat_backend,
                     "id": chat_llm_backend.id,
                     "description": chat_llm_backend.description,
+                    "max_tokens": chat_llm_backend.context_window_size,
                 }
-                for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True)
+                for chat_llm_backend in ChatLLMBackend.objects.filter(enabled=True).order_by("enabled", "name")
             ],
         }
 
@@ -81,55 +77,3 @@ class ChatsView(View):
             template_name="chats.html",
             context=context,
         )
-
-    @staticmethod
-    def decorate_selected_files(all_files: Sequence[File], messages: Sequence[ChatMessage]) -> None:
-        if messages:
-            last_user_message = [m for m in messages if m.role == ChatMessage.Role.user][-1]
-            selected_files: Sequence[File] = last_user_message.selected_files.all() or []
-        else:
-            selected_files = []
-
-        for file in all_files:
-            file.selected = file in selected_files
-
-
-class ChatsTitleView(View):
-    @dataclass_json(undefined=Undefined.EXCLUDE)
-    @dataclass(frozen=True)
-    class Title:
-        name: str
-
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        user_rating = ChatsTitleView.Title.schema().loads(request.body)
-
-        chat.name = user_rating.name
-        chat.save(update_fields=["name"])
-
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
-
-
-class UpdateChatFeedback(View):
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
-        def convert_to_boolean(value: str):
-            return value == "Yes"
-
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        chat.feedback_achieved = convert_to_boolean(request.POST.get("achieved"))
-        chat.feedback_saved_time = convert_to_boolean(request.POST.get("saved_time"))
-        chat.feedback_improved_work = convert_to_boolean(request.POST.get("improved_work"))
-        chat.feedback_notes = request.POST.get("notes")
-        chat.save()
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
-
-
-class DeleteChat(View):
-    @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:  # noqa: ARG002
-        chat: Chat = get_object_or_404(Chat, id=chat_id)
-        chat.archived = True
-        chat.save()
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)

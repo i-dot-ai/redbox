@@ -48,7 +48,7 @@ MAX_FILE_SIZE = 209715200  # 200 MB or 200 * 1024 * 1024
 
 class UploadView(View):
     @method_decorator(login_required)
-    def post(self, request: HttpRequest, chat_id: uuid.UUID | None = None) -> HttpResponse:
+    def post(self, request: HttpRequest, chat_id: uuid.UUID) -> HttpResponse:
         errors: MutableSequence[str] = []
 
         uploaded_files: MutableSequence[UploadedFile] = request.FILES.getlist("uploadDocs")
@@ -90,14 +90,11 @@ class UploadView(View):
         return errors
 
     @staticmethod
-    def ingest_file(
-        uploaded_file: UploadedFile, user: User, chat_id: uuid.UUID | None = None
-    ) -> tuple[File, Sequence[str]]:
+    def ingest_file(uploaded_file: UploadedFile, chat_id: uuid.UUID) -> tuple[File, Sequence[str]]:
         try:
             logger.info("getting file from s3")
             file = File.objects.create(
                 status=File.Status.processing.value,
-                user=user,
                 original_file=uploaded_file,
                 chat_id=chat_id,
             )
@@ -111,8 +108,8 @@ class UploadView(View):
 
 
 @login_required
-def remove_doc_view(request, doc_id: uuid):
-    file = get_object_or_404(File, id=doc_id)
+def remove_doc_view(request, chat_id: uuid.UUID, doc_id: uuid.UUID):
+    file = get_object_or_404(File, id=doc_id, chat_id=chat_id)
 
     if request.method == "POST":
         logger.info("Removing document: %s", request.POST["doc_id"])
@@ -133,4 +130,6 @@ def file_status_api_view(request: HttpRequest) -> JsonResponse:
     except File.DoesNotExist as ex:
         logger.exception("File object information not found in django - file does not exist %s.", file_id, exc_info=ex)
         return JsonResponse({"status": File.Status.errored.label})
-    return JsonResponse({"status": file.get_status_text(), "position_in_queue": file.position_in_queue()})
+    return JsonResponse(
+        {"status": file.get_status_text(), "position_in_queue": file.position_in_queue(), "tokens": file.token_count}
+    )

@@ -1,6 +1,7 @@
 import "./trusted-types.js";
 import "./libs/govuk-frontend.min.js";
 import "../../node_modules/i.ai-design-system/dist/iai-design-system.js";
+import "./web-components/animated-logo.mjs";
 
 // Because this doesn't appear to be working in Redbox: https://design-system.service.gov.uk/components/button/#stop-users-from-accidentally-sending-information-more-than-once
 (() => {

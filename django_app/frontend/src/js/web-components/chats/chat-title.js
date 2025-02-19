@@ -53,18 +53,11 @@ export class ChatTitle extends HTMLElement {
           this.input.value = this.dataset.title || "";
           this.#hideForm();
           return true;
-        case "Enter":
-          e.preventDefault();
-          this.#update(true);
-          return true;
         default:
           return true;
       }
     });
     this.input?.addEventListener("change", (e) => {
-      this.#update(true);
-    });
-    this.input?.addEventListener("blur", (e) => {
       this.#update(true);
     });
 
@@ -118,7 +111,6 @@ export class ChatTitle extends HTMLElement {
     if (!newTitle) {
       return;
     }
-    this.#send(newTitle);
     this.dataset.title = newTitle;
     if (this.heading) {
       this.heading.textContent = newTitle || "";
@@ -136,20 +128,6 @@ export class ChatTitle extends HTMLElement {
     }
   };
 
-  /**
-   * @param {string} newTitle
-   */
-  #send = (newTitle) => {
-    const csrfToken =
-      /** @type {HTMLInputElement | null} */ (
-        document.querySelector('[name="csrfmiddlewaretoken"]')
-      )?.value || "";
-    fetch(`/chat/${this.dataset.sessionId}/title/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
-      body: JSON.stringify({ name: newTitle }),
-    });
-  };
 }
 
 customElements.define("chat-title", ChatTitle);

@@ -8,7 +8,7 @@
 
 {% macro chat_history_item (chat, link, active_chat_id) %}
     <li class="rb-chat-history__item">
-        <chat-history-item data-chatid="{{ chat.id }}" {% if chat.id == active_chat_id %}data-iscurrentchat="true"{% endif %}>
+        <chat-history-item data-chatid="{{ chat.id }}" data-title-url="{{ url('chat-detail', '00000000-0000-0000-0000-000000000000') }}" {% if chat.id == active_chat_id %}data-iscurrentchat="true"{% endif %}>
             <div class="rb-chat-history__item-container">
             <span class="rb-chat-history__item-text-container">
                 {% if chat.id == active_chat_id %}
