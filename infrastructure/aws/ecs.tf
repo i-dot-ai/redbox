@@ -61,7 +61,7 @@ module "django-app" {
   # checkov:skip=CKV_TF_1: We're using semantic versions instead of commit hash
   #source                    = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
   source                     = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.1-ecs"
-  memory                     = var.env == "prod" ? 2048 : 512
+  memory                     = var.env == "prod" ? 8192 : 512
   cpu                        = var.env == "prod" ? 4096 : 256
   create_listener            = true
   create_networking          = true
