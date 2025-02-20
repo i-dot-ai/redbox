@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      litellm:
+        condition: service_started
     networks:
       - redbox-app-network
     env_file:
@@ -110,6 +112,20 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    env_file: .env
+    volumes:
+      - ./litellm_proxy_config.yml:/app/config.yml
+    networks:
+      - redbox-app-network
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    command: --config /app/config.yml --detailed_debug
 
 networks:
   redbox-app-network:

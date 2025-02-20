@@ -64,6 +64,12 @@ variable "elastic_api_key" {
   description = "API Key for elastic cloud instance"
 }
 
+variable "litellm_master_key" {
+  type = string
+  description = "master key for lite-llm"
+  default = "sk-1234"
+}
+
 variable "env" {
   type        = string
   description = "Environment"
