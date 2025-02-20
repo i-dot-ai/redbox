@@ -168,6 +168,17 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         DSIT_STRATEGIC_ENGAGEMENT = "DSIT Strategic Engagement", _("DSIT Strategic Engagement")
         DSIT_STRATEGY_PLANNING_INSIGHTS = "DSIT Strategy, Planning & Insights", _("DSIT Strategy, Planning & Insights")
         DSIT_TRANSFORMATION = "DSIT Transformation", _("DSIT Transformation")
+        DSIT_TELECOMMUNICATIONS_POLICY = "DSIT Telecommunications Policy", _("DSIT Telecommunications Policy")
+        DSIT_AI_POLICY_ANALYSIS = "DSIT AI Policy Analysis", _("DSIT AI Policy Analysis")
+        DSIT_AI_SECURITY_INSTITUTE = "DSIT AI Security Institute", _("DSIT AI Security Institute")
+        DSIT_TRANSFORMATION_AND_INNOVATION_DIRECTORATE = (
+            "DSIT Transformation & Innovation Directorate",
+            _("DSIT Transformation & Innovation Directorate"),
+        )
+        DSIST_AI_REGULATION = "DSIT AI Regulation", _("DSIT AI Regulation")
+        DSIST_PROJECT_DELIVERY_PROFESSION = "DSIT Project Delivery Profession", _("DSIT Project Delivery Profession")
+        DSIST_EXPERT_EXCHANGE_PROFESSION = "DSIT Expert Exchange Programme", _("DSIT Expert Exchange Programme")
+
         ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
         EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
             "Equality and Human Rights Commission",
