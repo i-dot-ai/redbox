@@ -655,7 +655,8 @@ class ChatMessage(UUIDPrimaryKeyBase):
     @classmethod
     def metrics(cls):
         return cls.objects.values(
-            "chat__user__business_unit",
+            "chat__user__business_unit__department",
+            "chat__user__business_unit__business_unit",
             "chat__user__grade",
             "chat__user__profession",
             "chat__user__ai_experience",
