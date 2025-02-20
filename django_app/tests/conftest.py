@@ -18,7 +18,8 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
-    File, DepartmentBusinessUnit,
+    DepartmentBusinessUnit,
+    File,
 )
 
 User = get_user_model()
@@ -128,9 +129,11 @@ def bob(create_user):
 def peter_rabbit():
     return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
 
+
 @pytest.fixture()
 def prime_ministers_office():
     return DepartmentBusinessUnit.objects.get(business_unit="Prime Minister's Office")
+
 
 @pytest.fixture()
 def user_with_demographic_data(prime_ministers_office) -> User:
