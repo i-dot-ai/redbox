@@ -34,10 +34,6 @@ env = get_settings()
 tokeniser = get_tokeniser()
 
 
-def escape_curly_brackets(text: str) -> str:
-    return text.replace("{", "{{").replace("}", "}}")
-
-
 class UUIDPrimaryKeyBase(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -685,8 +681,8 @@ class ChatMessage(UUIDPrimaryKeyBase):
 
     def to_langchain(self) -> AnyMessage:
         if self.role == self.Role.ai:
-            return AIMessage(content=escape_curly_brackets(self.text))
-        return HumanMessage(content=escape_curly_brackets(self.text))
+            return AIMessage(content=self.text)
+        return HumanMessage(content=self.text)
 
     def log(self):
         n_selected_files = self.chat.file_set.count()
