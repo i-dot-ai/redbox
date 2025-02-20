@@ -88,7 +88,7 @@ def create_user():
         date_joined_iso,
         is_staff=False,
         grade=User.UserGrade.DIRECTOR,
-        business_unit=User.BusinessUnit.GOVERNMENT_BUSINESS_SERVICES,
+        business_unit=None,
         profession=User.Profession.IA,
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
     ):
