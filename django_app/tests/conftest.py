@@ -108,11 +108,8 @@ def create_user():
 
 
 @pytest.fixture()
-def alice(create_user):
-    return create_user(
-        "alice@cabinetoffice.gov.uk",
-        "2000-01-01",
-    )
+def alice(create_user, prime_ministers_office):
+    return create_user("alice@cabinetoffice.gov.uk", "2000-01-01", business_unit=prime_ministers_office)
 
 
 @pytest.fixture()

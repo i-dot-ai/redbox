@@ -192,6 +192,7 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             "extraction_date",
             "created_at__date",
+            "department",
             "business_unit",
             "grade",
             "profession",
@@ -207,7 +208,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             historic_date(days_ago=0),
             historic_date(days_ago=40),
-            "Government Business Services",
+            "Cabinet Office",
+            "Prime Minister's Office",
             "D",
             "IA",
             "Experienced Navigator",
@@ -222,7 +224,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             historic_date(days_ago=0),
             historic_date(days_ago=20),
-            "Government Business Services",
+            "Cabinet Office",
+            "Prime Minister's Office",
             "D",
             "IA",
             "Experienced Navigator",
@@ -237,7 +240,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             historic_date(days_ago=0),
             historic_date(days_ago=5),
-            "Government Business Services",
+            "Cabinet Office",
+            "Prime Minister's Office",
             "D",
             "IA",
             "Experienced Navigator",
@@ -252,7 +256,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             historic_date(days_ago=0),
             historic_date(days_ago=1),
-            "Government Business Services",
+            "Cabinet Office",
+            "Prime Minister's Office",
             "D",
             "IA",
             "Experienced Navigator",
@@ -267,7 +272,8 @@ def test_chat_metrics(user_with_chats_with_messages_over_time: Chat, s3_client):
         [
             historic_date(days_ago=0),
             historic_date(days_ago=0),
-            "Government Business Services",
+            "Cabinet Office",
+            "Prime Minister's Office",
             "D",
             "IA",
             "Experienced Navigator",

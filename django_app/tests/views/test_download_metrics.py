@@ -18,6 +18,7 @@ def test_download_metrics(user_with_chats_with_messages_over_time, client, alice
     assert header == [
         "extraction_date",
         "created_at__date",
+        "department",
         "business_unit",
         "grade",
         "profession",
