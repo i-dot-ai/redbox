@@ -116,14 +116,19 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='redbox_core.departmentbusinessunit'),
         ),
         migrations.RunPython(back_populate_department_business_unit, migrations.RunPython.noop),
-        migrations.RemoveField(
+        migrations.AlterField(
             model_name='user',
             name='business_unit',
+            field=models.CharField(blank=True, max_length=64, null=True),
+        ),
+        migrations.RenameField(
+            model_name='user',
+            old_name='business_unit',
+            new_name='old_business_unit',
         ),
         migrations.RenameField(
             model_name='user',
             old_name='new_business_unit',
             new_name='business_unit',
         ),
-
     ]

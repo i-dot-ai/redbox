@@ -257,6 +257,7 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     username = None
     password = models.CharField("password", max_length=128, blank=True, null=True)
+    old_business_unit = models.CharField(null=True, blank=True, max_length=64)
     business_unit = models.ForeignKey(DepartmentBusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
