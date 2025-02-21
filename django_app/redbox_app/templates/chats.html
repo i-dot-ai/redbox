@@ -103,6 +103,12 @@
       </div>
 
       {% if not messages %}
+
+        {# Notice area #}
+        <div class="rb-notice">
+          <p>A test notice about signing up for some user research, by filling in this <a class="govuk-link govuk-!-display-inline-block" href="sign-up" rel="noopener">sign-up form</a></p>
+        </div>
+
         {% set canned_prompts %}
             <canned-prompts class="chat-options"></canned-prompts>
         {% endset %}

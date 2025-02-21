@@ -70,3 +70,18 @@ main:has(.iai-chat-bubble) .chat-options {
     padding: 0.875rem 1rem;
   }
 }
+
+
+.rb-notice {
+  background-color: white;
+  border: 2px solid $redbox-red;
+  border-radius: 0.5rem;
+  margin: 0 4rem 1rem 2rem;
+  padding: 0.5rem 1.5rem;
+}
+.rb-notice p {
+  line-height: 1.4;
+}
+main:has(.iai-chat-bubble) .rb-notice {
+  display: none;
+}
