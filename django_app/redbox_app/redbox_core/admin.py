@@ -6,9 +6,14 @@ from django.contrib.auth import get_user_model
 from import_export.admin import ExportMixin, ImportExportMixin
 
 from . import models
+from .models import DepartmentBusinessUnit
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class DepartmentBusinessUnitAdmin(admin.ModelAdmin):
+    pass
 
 
 class ChatLLMBackendAdmin(admin.ModelAdmin):
@@ -215,6 +220,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["chat__user__email", "file_name"]
 
 
+admin.site.register(DepartmentBusinessUnit, DepartmentBusinessUnitAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)
