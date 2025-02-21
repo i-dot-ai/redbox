@@ -108,8 +108,8 @@ def create_user():
 
 
 @pytest.fixture()
-def alice(create_user, prime_ministers_office):
-    return create_user("alice@cabinetoffice.gov.uk", "2000-01-01", business_unit=prime_ministers_office)
+def alice(create_user, gov_business_services):
+    return create_user("alice@cabinetoffice.gov.uk", "2000-01-01", business_unit=gov_business_services)
 
 
 @pytest.fixture()
@@ -128,18 +128,22 @@ def peter_rabbit():
 
 
 @pytest.fixture()
-def prime_ministers_office():
-    return DepartmentBusinessUnit.objects.get(business_unit="Prime Minister's Office")
+def gov_business_services() -> DepartmentBusinessUnit:
+    dept, _ = DepartmentBusinessUnit.objects.get_or_create(
+        department=DepartmentBusinessUnit.Department.CABINET_OFFICE,
+        business_unit="Government Business Services",
+    )
+    return dept
 
 
 @pytest.fixture()
-def user_with_demographic_data(prime_ministers_office) -> User:
+def user_with_demographic_data(gov_business_services) -> User:
     return User.objects.create_user(
         name="Sir Gregory Pitkin",
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
         email="mrs.tiggywinkle@example.com",
         grade="DG",
-        business_unit=prime_ministers_office,
+        business_unit=gov_business_services,
         profession="AN",
     )
 
