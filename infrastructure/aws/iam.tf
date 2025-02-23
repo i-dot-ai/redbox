@@ -42,7 +42,9 @@ data "aws_iam_policy_document" "ecs_exec_role_policy" {
     ]
     resources = [
       aws_secretsmanager_secret.django-app-secret.arn,
-      "${aws_secretsmanager_secret.django-app-secret.arn}:*"
+      "${aws_secretsmanager_secret.django-app-secret.arn}:*",
+      aws_secretsmanager_secret.litellm-secret.arn,
+      "${aws_secretsmanager_secret.litellm-secret.arn}:*"
     ]
   }
 }
@@ -58,6 +60,7 @@ resource "aws_iam_role_policy_attachment" "redbox_role_policy" {
     {
       "worker" = module.worker.ecs_task_execution_exec_role_name,
       "django" = module.django-app.ecs_task_execution_exec_role_name,
+      "litellm" = module.litellm.ecs_task_execution_exec_role_name,
     }
   )
   role       = each.value
