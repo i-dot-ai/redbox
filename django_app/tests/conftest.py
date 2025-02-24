@@ -18,6 +18,7 @@ from redbox_app.redbox_core.models import (
     Chat,
     ChatLLMBackend,
     ChatMessage,
+    DepartmentBusinessUnit,
     File,
 )
 
@@ -88,7 +89,7 @@ def create_user():
         date_joined_iso,
         is_staff=False,
         grade=User.UserGrade.DIRECTOR,
-        business_unit=User.BusinessUnit.GOVERNMENT_BUSINESS_SERVICES,
+        business_unit=None,
         profession=User.Profession.IA,
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
     ):
@@ -107,11 +108,8 @@ def create_user():
 
 
 @pytest.fixture()
-def alice(create_user):
-    return create_user(
-        "alice@cabinetoffice.gov.uk",
-        "2000-01-01",
-    )
+def alice(create_user, gov_business_services):
+    return create_user("alice@cabinetoffice.gov.uk", "2000-01-01", business_unit=gov_business_services)
 
 
 @pytest.fixture()
@@ -130,13 +128,22 @@ def peter_rabbit():
 
 
 @pytest.fixture()
-def user_with_demographic_data() -> User:
+def gov_business_services() -> DepartmentBusinessUnit:
+    dept, _ = DepartmentBusinessUnit.objects.get_or_create(
+        department=DepartmentBusinessUnit.Department.CABINET_OFFICE,
+        business_unit="Government Business Services",
+    )
+    return dept
+
+
+@pytest.fixture()
+def user_with_demographic_data(gov_business_services) -> User:
     return User.objects.create_user(
         name="Sir Gregory Pitkin",
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
         email="mrs.tiggywinkle@example.com",
         grade="DG",
-        business_unit="Prime Minister's Office",
+        business_unit=gov_business_services,
         profession="AN",
     )
 

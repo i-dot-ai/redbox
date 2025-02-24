@@ -38,12 +38,14 @@
         {{ form.email }}
       </div>
 
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
-          {{ form.business_unit.label }}
-        </label>
-        {{ form.business_unit }}
-      </div>
+      <department-selector>
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="{{ form.business_unit.id_for_label }}">
+            {{ form.business_unit.label }}
+          </label>
+          {{ form.business_unit }}
+        </div>
+      </department-selector>
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="{{ form.role.id_for_label }}">
