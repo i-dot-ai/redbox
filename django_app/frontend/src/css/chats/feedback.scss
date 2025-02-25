@@ -141,9 +141,12 @@
   font-size: 0.75rem;
   max-width: 18rem;
   min-height: 6.5rem;
+  max-height: calc(100% - 8rem);
+  overflow: scroll;
   position: fixed;
   right: 0;
   top: calc(50% - 4rem);
+  z-index: 11;
 }
 main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
   display: flex;
@@ -226,6 +229,7 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
 .exit-feedback__send-button {
   margin-bottom: 0;
   min-height: 2.25rem;
+  width: auto;
 }
 .exit-feedback__confirmation-container {
   align-items: center;
