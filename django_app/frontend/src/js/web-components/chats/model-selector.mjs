@@ -8,7 +8,8 @@ export class ModelSelector extends RedboxElement {
     options: { type: Array, attribute: "data-models" },
     expanded: { type: Boolean, state: true },
     selectedOption: {type: Number, state: true},
-    activeOption: {type: Number, state: true} // this is the currently highlighted option when using keyboard, so can be different to selectedOption
+    activeOption: {type: Number, state: true}, // this is the currently highlighted option when using keyboard, so can be different to selectedOption
+    keyboardInUse: {type: Boolean, state: true}
   };
 
   constructor() {
@@ -38,7 +39,7 @@ export class ModelSelector extends RedboxElement {
         <div class="rb-model-selector__list" id="models-list" role="listbox" aria-label="Model" hidden=${this.expanded ? nothing : "true"}>
           ${this.options.map(
             (option, index) => html`
-              <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
+              <div role="option" @click=${this.#clickOption} class="rb-model-selector__option ${index === this.activeOption ? 'rb-model-selector__option--active' : ''} ${this.keyboardInUse ? 'keyboard' : ''}" data-index=${index} id="model-option-${index}" aria-selected=${index === this.selectedOption ? "true" : "false"} data-value=${option.id}>
                 <span>${option.name}</span>
                 <span>${option.description}</span>
               </div>
@@ -63,6 +64,7 @@ export class ModelSelector extends RedboxElement {
 
   #toggle() {
     this.expanded = !this.expanded;
+    this.keyboardInUse = false;
   }
 
   #clickOption(evt) {
@@ -123,6 +125,7 @@ export class ModelSelector extends RedboxElement {
         this.expanded = true;
       }
     }
+    this.keyboardInUse = true;
   }
 
   #blur() {

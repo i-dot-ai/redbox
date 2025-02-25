@@ -33,6 +33,9 @@
 .rb-model-selector__option--active, .rb-model-selector__option:hover {
   background-color: #f5ebeb;
 }
+.rb-model-selector__option--active.keyboard {
+  outline: 1px solid black;
+}
 .rb-model-selector__option span {
   display: block;
   word-wrap: none;
