@@ -1,4 +1,4 @@
-{% set pageTitle = "Chats" %}
+{% set pageTitle = current_chat.name + " - Chats" %}
 {% extends "base.html" %}
 {% from "macros/chat-history-macros.html" import chat_history_heading, chat_history_item %}
 {% from "macros/chat-macros.html" import message_box %}
