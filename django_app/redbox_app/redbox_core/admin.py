@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class DepartmentBusinessUnitAdmin(admin.ModelAdmin):
+    pass
+
+
 class ChatLLMBackendAdmin(admin.ModelAdmin):
     list_display = [
         "name",
@@ -215,6 +219,7 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["chat__user__email", "file_name"]
 
 
+admin.site.register(models.DepartmentBusinessUnit, DepartmentBusinessUnitAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(models.Chat, ChatAdmin)
 admin.site.register(models.ChatLLMBackend, ChatLLMBackendAdmin)

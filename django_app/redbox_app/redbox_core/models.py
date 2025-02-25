@@ -92,6 +92,22 @@ class ChatLLMBackend(models.Model):
         return {str(o): o.context_window_size for o in cls.objects.filter(enabled=True)}
 
 
+class DepartmentBusinessUnit(UUIDPrimaryKeyBase):
+    class Department(models.TextChoices):
+        NO10 = "Number 10", _("Number 10")
+        CABINET_OFFICE = "Cabinet Office", _("Cabinet Office")
+        DSIT = "Department for Science, Innovation & Technology", _("Department for Science, Innovation & Technology")
+        OTHER = "Other Department", _("Other Department")
+
+    department = models.CharField(
+        max_length=64, choices=Department, help_text="Government department", default=Department.OTHER
+    )
+    business_unit = models.CharField(max_length=128, help_text="Business Unit")
+
+    def __str__(self):
+        return f"{self.department} - {self.business_unit}"
+
+
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
         AA = "AA", _("AA")
@@ -139,96 +155,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
         TX = "TX", _("Tax")
         VET = "VET", _("Veterinary")
         OT = "OT", _("Other")
-
-    class BusinessUnit(models.TextChoices):
-        BORDERS_UNIT = "Borders Unit", _("Borders Unit")
-        CENTRAL_COSTS = "Central Costs", _("Central Costs")
-        CENTRAL_DIGITAL_AND_DATA_OFFICE = "Central Digital and Data Office", _("Central Digital and Data Office")
-        CIVIL_SERVICE_COMMISSION = "Civil Service Commission", _("Civil Service Commission")
-        CIVIL_SERVICE_HUMAN_RESOURCES = "Civil Service Human Resources", _("Civil Service Human Resources")
-        CO_CHIEF_OPERATING_OFFICER = "CO Chief Operating Officer", _("CO Chief Operating Officer")
-        CO_DIGITAL = "CO Digital", _("CO Digital")
-        CO_HMT_COMMERCIAL = "CO HMT Commercial", _("CO HMT Commercial")
-        CO_PEOPLE_AND_PLACES = "CO People and Places", _("CO People and Places")
-        CO_STRATEGY_FINANCE_AND_PERFORMANCE = (
-            "CO Strategy, Finance, and Performance",
-            _("CO Strategy Finance, and Performance"),
-        )
-        COMMERCIAL_MODELS = "Commercial Models", _("Commercial Models")
-        COP_PRESIDENCY = "COP Presidency", _("COP Presidency")
-        COVID_INQUIRY = "Covid Inquiry", _("Covid Inquiry")
-        CROWN_COMMERCIAL_SERVICE = "Crown Commercial Service", _("Crown Commercial Service")
-        CS_MODERNISATION_AND_REFORM_UNIT = "CS Modernisation and Reform Unit", _("CS Modernisation and Reform Unit")
-        DELIVERY_GROUP = "Delivery Group", _("Delivery Group")
-        DSIT_DATA_SCIENCE_AND_TRANSFORMATION = (
-            "DSIT Data Science & Data Transformation",
-            _("DSIT Data Science & Data Transformation"),
-        )
-        DSIT_MEDIA_AND_DIGITAL = "DSIT Media & Digital", _("DSIT Media & Digital")
-        DSIT_STRATEGIC_ENGAGEMENT = "DSIT Strategic Engagement", _("DSIT Strategic Engagement")
-        DSIT_STRATEGY_PLANNING_INSIGHTS = "DSIT Strategy, Planning & Insights", _("DSIT Strategy, Planning & Insights")
-        DSIT_TRANSFORMATION = "DSIT Transformation", _("DSIT Transformation")
-        DSIT_TELECOMMUNICATIONS_POLICY = "DSIT Telecommunications Policy", _("DSIT Telecommunications Policy")
-        DSIT_AI_POLICY_ANALYSIS = "DSIT AI Policy Analysis", _("DSIT AI Policy Analysis")
-        DSIT_AI_SECURITY_INSTITUTE = "DSIT AI Security Institute", _("DSIT AI Security Institute")
-        DSIT_TRANSFORMATION_AND_INNOVATION_DIRECTORATE = (
-            "DSIT Transformation & Innovation Directorate",
-            _("DSIT Transformation & Innovation Directorate"),
-        )
-        DSIST_AI_REGULATION = "DSIT AI Regulation", _("DSIT AI Regulation")
-        DSIST_PROJECT_DELIVERY_PROFESSION = "DSIT Project Delivery Profession", _("DSIT Project Delivery Profession")
-        DSIST_EXPERT_EXCHANGE_PROFESSION = "DSIT Expert Exchange Programme", _("DSIT Expert Exchange Programme")
-
-        ECONOMIC_AND_DOMESTIC_SECRETARIAT = "Economic and Domestic Secretariat", _("Economic and Domestic Secretariat")
-        EQUALITY_AND_HUMAN_RIGHTS_COMMISSION = (
-            "Equality and Human Rights Commission",
-            _("Equality and Human Rights Commission"),
-        )
-        EQUALITY_HUB = "Equality Hub", _("Equality Hub")
-        FLEXIBLE_CS_POOL = "Flexible CS Pool", _("Flexible CS Pool")
-        GEOSPATIAL_COMMISSION = "Geospatial Commission", _("Geospatial Commission")
-        GOVERNMENT_BUSINESS_SERVICES = "Government Business Services", _("Government Business Services")
-        GOVERNMENT_COMMERCIAL_AND_GRANTS_FUNCTION = (
-            "Government Commercial and Grants Function",
-            _("Government Commercial and Grants Function"),
-        )
-        GOVERNMENT_COMMUNICATION_SERVICE = "Government Communication Service", _("Government Communication Service")
-        GOVERNMENT_DIGITAL_SERVICE = "Government Digital Service", _("Government Digital Service")
-        GOVERNMENT_IN_PARLIAMENT = "Government in Parliament", _("Government in Parliament")
-        GOVERNMENT_LEGAL_DEPARTMENT = "Government Legal Department", _("Government Legal Department")
-        GOVERNMENT_PEOPLE_GROUP = "Government People Group", _("Government People Group")
-        GOVERNMENT_PROPERTY_AGENCY = "Government Property Agency", _("Government Property Agency")
-        GOVERNMENT_SECURITY_GROUP = "Government Security Group", _("Government Security Group")
-        GRENFELL_INQUIRY = "Grenfell Inquiry", _("Grenfell Inquiry")
-        INFECTED_BLOOD_INQUIRY = "Infected Blood Inquiry", _("Infected Blood Inquiry")
-        INFRASTRUCTURE_AND_PROJECTS_AUTHORITY = (
-            "Infrastructure and Projects Authority",
-            _("Infrastructure and Projects Authority"),
-        )
-        INQUIRIES_SPONSORSHIP_TEAM = "Inquiries Sponsorship Team", _("Inquiries Sponsorship Team")
-        INTELLIGENCE_AND_SECURITY_COMMITTEE = (
-            "Intelligence and Security Committee",
-            _("Intelligence and Security Committee"),
-        )
-        JOINT_INTELLIGENCE_ORGANISATION = "Joint Intelligence Organisation", _("Joint Intelligence Organisation")
-        NATIONAL_SECURITY_SECRETARIAT = "National Security Secretariat", _("National Security Secretariat")
-        OFFICE_FOR_VETERANS_AFFAIRS = "Office for Veterans' Affairs", _("Office for Veterans' Affairs")
-        OFFICE_OF_GOVERNMENT_PROPERTY = "Office of Government Property", _("Office of Government Property")
-        OFFICE_OF_THE_REGISTRAR_OF_CONSULTANT_LOBBYISTS = (
-            "Office of the Registrar of Consultant Lobbyists",
-            _("Office of the Registrar of Consultant Lobbyists"),
-        )
-        PRIME_MINISTERS_OFFICE = "Prime Minister's Office", _("Prime Minister's Office")
-        PROPRIETY_AND_CONSTITUTION_GROUP = "Propriety and Constitution Group", _("Propriety and Constitution Group")
-        PUBLIC_BODIES_AND_PRIORITY_PROJECTS_UNIT = (
-            "Public Bodies and Priority Projects Unit",
-            _("Public Bodies and Priority Projects Unit"),
-        )
-        PUBLIC_INQUIRY_RESPONSE_UNIT = "Public Inquiry Response Unit", _("Public Inquiry Response Unit")
-        PUBLIC_SECTOR_FRAUD_AUTHORITY = "Public Sector Fraud Authority", _("Public Sector Fraud Authority")
-        UKSV = "UKSV", _("UKSV")
-        UNION_AND_CONSTITUTION_GROUP = "Union and Constitution Group", _("Union and Constitution Group")
-        OTHER = "Other", _("Other")
 
     class AIExperienceLevel(models.TextChoices):
         CURIOUS_NEWCOMER = "Curious Newcomer", _("I haven't used Generative AI tools")
@@ -331,7 +257,8 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     username = None
     password = models.CharField("password", max_length=128, blank=True, null=True)
-    business_unit = models.CharField(null=True, blank=True, max_length=64, choices=BusinessUnit)
+    old_business_unit = models.CharField(null=True, blank=True, max_length=64)
+    business_unit = models.ForeignKey(DepartmentBusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
     ai_experience = models.CharField(null=True, blank=True, max_length=25, choices=AIExperienceLevel)
@@ -729,7 +656,8 @@ class ChatMessage(UUIDPrimaryKeyBase):
     @classmethod
     def metrics(cls):
         return cls.objects.values(
-            "chat__user__business_unit",
+            "chat__user__business_unit__department",
+            "chat__user__business_unit__business_unit",
             "chat__user__grade",
             "chat__user__profession",
             "chat__user__ai_experience",

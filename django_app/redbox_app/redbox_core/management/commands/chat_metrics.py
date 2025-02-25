@@ -22,7 +22,8 @@ def to_csv(writer, record):
 class MetricSerializer(Serializer):
     extraction_date = SerializerMethodField()
     created_at__date = DateField()
-    business_unit = CharField(source="chat__user__business_unit")
+    department = CharField(source="chat__user__business_unit__department")
+    business_unit = CharField(source="chat__user__business_unit__business_unit")
     grade = CharField(source="chat__user__grade")
     profession = CharField(source="chat__user__profession")
     ai_experience = CharField(source="chat__user__ai_experience")

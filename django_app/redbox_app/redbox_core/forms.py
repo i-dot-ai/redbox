@@ -4,6 +4,8 @@ from typing import ClassVar
 from django import forms
 from django.contrib.auth import get_user_model
 
+from redbox_app.redbox_core.models import DepartmentBusinessUnit
+
 User = get_user_model()
 
 
@@ -12,6 +14,8 @@ class SignInForm(forms.Form):
 
 
 class SignUpForm(forms.ModelForm):
+    business_unit = forms.ModelChoiceField(queryset=DepartmentBusinessUnit.objects.all(), empty_label=None)
+
     class Meta:
         model = User
         fields = (
