@@ -27,22 +27,24 @@ export class UploadContainer extends RedboxElement {
 
   render() {
     return html`
-      <div class="rb-upload-container">
-        <h3 class="govuk-visually-hidden">Uploading documents</h3>
-        <ul>
-          ${this.docs?.map(
-            (doc) => html`
-              <li class="rb-upload-container__doc">
-                <file-status data-id=${doc.id} data-name=${doc.file_name} data-error=${doc.error ? "true" : nothing}>${doc.file_status}</file-status>
-                <span class="rb-upload-container__filename-container">
-                  <span class="rb-upload-container__filename" aria-hidden="true">${doc.file_name}</span>
-                  <button class="rb-upload-container__remove-button" @click=${this.#remove} aria-label="Remove ${doc.file_name}" type="button">&times;</button>
-                </span>
-              </li>
-            `
-          )}
-        </ul>
-      </div>
+      ${this.docs?.length ? html`
+        <div class="rb-upload-container">
+          <h3 class="govuk-visually-hidden">Attached documents</h3>
+          <ul>
+            ${this.docs?.map(
+              (doc) => html`
+                <li class="rb-upload-container__doc">
+                  <file-status data-id=${doc.id} data-name=${doc.file_name} data-error=${doc.error ? "true" : nothing}>${doc.file_status}</file-status>
+                  <span class="rb-upload-container__filename-container">
+                    <span class="rb-upload-container__filename" aria-hidden="true">${doc.file_name}</span>
+                    <button class="rb-upload-container__remove-button" @click=${this.#remove} aria-label="Remove ${doc.file_name}" type="button">&times;</button>
+                  </span>
+                </li>
+              `
+            )}
+          </ul>
+        </div>
+      ` : nothing}
     `;
   }
 
