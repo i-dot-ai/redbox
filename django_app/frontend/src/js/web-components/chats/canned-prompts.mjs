@@ -23,17 +23,17 @@ class CannedPrompts extends RedboxElement {
         <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_agenda" type="button">
             <img src="/static/icons/icon_square_doc.svg" alt=""/>
             <span class="govuk-visually-hidden">Populate question field with: </span>
-            Summarise this document
+            <span class="chat-options__prompt-text">Summarise this document</span>
         </button>
         <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_objectives" type="button">
             <img src="/static/icons/archery.svg" alt=""/>
             <span class="govuk-visually-hidden">Populate question field with: </span>
-            Draft an email about…
+            <span class="chat-options__prompt-text">Draft an email about…</span>
         </button>
         <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_ps_role" type="button">
             <img src="/static/icons/person.svg" alt=""/>
             <span class="govuk-visually-hidden">Populate question field with: </span>
-            Reformat this to assist with neurodivergent communication…
+            <span class="chat-options__prompt-text">Reformat this to assist with neurodivergent communication…</span>
         </button>
       </fieldset>
       <p class="chat-options__info-text">Or type any question below</p>
@@ -41,7 +41,7 @@ class CannedPrompts extends RedboxElement {
   }
 
   #prepopulateMessageBox = (evt) => {
-    const prompt = (evt.target.textContent?.trim() || "").replace("…", " ");
+    const prompt = (evt.target.closest("button").querySelector(".chat-options__prompt-text").textContent?.trim() || "").replace("…", " ");
     /** @type HTMLInputElement | null */
     let chatInput = document.querySelector(".rb-chat-input textarea");
     if (chatInput) {
