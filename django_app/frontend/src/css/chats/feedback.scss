@@ -19,7 +19,7 @@
   padding: 0 1rem;
 }
 .feedback__container--1:not([hidden]) {
-  color: #6b7280;
+  color: var(--iai-colour-text-primary);
   display: flex;
   flex-wrap: wrap;
   font-size: 0.625rem;
@@ -46,7 +46,7 @@
   padding: 0 0.25rem;
 }
 .feedback__star-button--hover {
-  color: #bebebe;
+  color: #8C8C8C;
 }
 
 .feedback__response-container {
