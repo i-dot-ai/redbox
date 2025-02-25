@@ -3,7 +3,6 @@
 import django.db.models.deletion
 import uuid
 from django.db import migrations, models
-from django.db.models import Count
 
 
 def back_populate_department_business_unit(apps, schema_editor):
@@ -11,7 +10,7 @@ def back_populate_department_business_unit(apps, schema_editor):
     DepartmentBusinessUnit.objects.all().delete()
 
     User = apps.get_model("redbox_core", "User")
-    for user in User.objects.all():
+    for user in User.objects.filter(business_unit__isnull=False):
         if user.email.endswith("no10.gov.uk"):
             business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
                 department="Number 10",
@@ -29,6 +28,12 @@ def back_populate_department_business_unit(apps, schema_editor):
             )
         user.new_business_unit = business_unit
         user.save()
+
+    other_business_unit = DepartmentBusinessUnit.objects.create(
+        department="Other Department",
+        business_unit="Other",
+    )
+    User.objects.filter(business_unit__isnull=True).update(new_business_unit = other_business_unit)
 
 
 class Migration(migrations.Migration):
