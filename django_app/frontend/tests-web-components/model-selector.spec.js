@@ -14,7 +14,8 @@ test(`A different model can be selected`, async ({ page }) => {
 
   // A new value can be selected
   await select.click();
-  await page.locator("#model-option-2").click();
+  await page.locator("#model-option-0").click();
+  await page.waitForTimeout(100);
   await expect(select).toContainText("Claude");
 
   // max-tokens has updated
