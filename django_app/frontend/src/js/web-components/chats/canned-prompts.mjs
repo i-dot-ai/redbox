@@ -18,20 +18,24 @@ class CannedPrompts extends RedboxElement {
         <animated-logo class="chat-options__icon"></animated-logo>
         What would you like to ask?
       </h3>
-      <div class="chat-options__options">
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_agenda" type="button">
-              <img src="/static/icons/icon_square_doc.svg" alt=""/>
-              Summarise this document
-          </button>
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_objectives" type="button">
-              <img src="/static/icons/archery.svg" alt=""/>
-              Draft an email about…
-          </button>
-          <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_ps_role" type="button">
-              <img src="/static/icons/person.svg" alt=""/>
-              Reformat this to assist with neurodivergent communication…
-          </button>
-      </div>
+      <fieldset class="chat-options__options">
+        <legend class="govuk-visually-hidden">Question suggestions</legend>
+        <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_agenda" type="button">
+            <img src="/static/icons/icon_square_doc.svg" alt=""/>
+            <span class="govuk-visually-hidden">Populate question field with: </span>
+            Summarise this document
+        </button>
+        <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_objectives" type="button">
+            <img src="/static/icons/archery.svg" alt=""/>
+            <span class="govuk-visually-hidden">Populate question field with: </span>
+            Draft an email about…
+        </button>
+        <button @click=${this.#prepopulateMessageBox} class="chat-options__option chat-options__option_ps_role" type="button">
+            <img src="/static/icons/person.svg" alt=""/>
+            <span class="govuk-visually-hidden">Populate question field with: </span>
+            Reformat this to assist with neurodivergent communication…
+        </button>
+      </fieldset>
       <p class="chat-options__info-text">Or type any question below</p>
     `;
   }
