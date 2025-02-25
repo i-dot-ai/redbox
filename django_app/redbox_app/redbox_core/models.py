@@ -629,13 +629,16 @@ class ChatMessage(UUIDPrimaryKeyBase):
 
     def log(self):
         n_selected_files = self.chat.file_set.count()
+        department = self.chat.user.business_unit.department if self.chat.user.business_unit else None
+        business_unit = self.chat.user.business_unit.business_unit if self.chat.user.business_unit else None
+
         elastic_log_msg = {
             "@timestamp": self.created_at.isoformat(),
             "id": str(self.id),
             "chat_id": str(self.chat.id),
             "user_id": str(self.chat.user.id),
-            "department": self.chat.user.business_unit.department,
-            "user_business_unit": self.chat.user.business_unit.business_unit,
+            "department": department,
+            "user_business_unit": business_unit,
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
