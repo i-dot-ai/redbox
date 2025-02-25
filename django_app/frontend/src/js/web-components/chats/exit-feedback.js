@@ -40,9 +40,8 @@ class ExitFeedback extends HTMLElement {
         </div>
         <div class="exit-feedback__page">
           <fieldset class="exit-feedback__question-container exit-feedback__question-container--small">
-            <div>
-              <legend>Did Redbox help save you time?</legend>
-            </div>
+            <legend class="govuk-visually-hidden">Did Redbox help save you time?</legend>
+            <div aria-hidden="true">Did Redbox help save you time?</div>
             <div class="exit-feedback__radio-container">
               <input type="radio" id="exit-feedback__input-time-yes" name="feedback_saved_time" value="Yes"/>
               <label for="exit-feedback__input-time-yes">
@@ -59,9 +58,8 @@ class ExitFeedback extends HTMLElement {
             </div>
           </fieldset>
           <fieldset class="exit-feedback__question-container exit-feedback__question-container--small">
-            <div>
-              <legend>Did Redbox help to improve your work?</legend>
-            </div>
+            <legend class="govuk-visually-hidden">Did Redbox help to improve your work?</legend>
+            <div aria-hidden="true">Did Redbox help to improve your work?</div>
             <div class="exit-feedback__radio-container">
               <input type="radio" id="exit-feedback__input-improve-work-yes" name="feedback_improved_work" value="Yes"/>
               <label for="exit-feedback__input-improve-work-yes">
