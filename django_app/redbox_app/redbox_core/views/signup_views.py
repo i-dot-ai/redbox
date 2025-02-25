@@ -54,6 +54,8 @@ class Signup1(AbstractSignup):
             form.add_error("email", "The email must be a valid email account")
 
         if form.is_valid():
+            if business_unit := form.cleaned_data.get("business_unit"):
+                form.cleaned_data["business_unit"] = str(business_unit.pk)
             request.session["sign_up_data"] = form.cleaned_data
             return redirect("sign-up-page-2")
         else:
