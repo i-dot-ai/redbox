@@ -32,6 +32,8 @@ class AbstractSignup(View):
         form = SignUpForm(query_dict)
 
         if form.is_valid():
+            if business_unit := form.cleaned_data.get("business_unit"):
+                form.cleaned_data["business_unit"] = str(business_unit.pk)
             request.session["sign_up_data"] = form.cleaned_data
             return redirect(self.next_page)
         else:
