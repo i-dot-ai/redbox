@@ -12,9 +12,23 @@ def back_populate_department_business_unit(apps, schema_editor):
 
     User = apps.get_model("redbox_core", "User")
     for user in User.objects.all():
-        department = "Department for Science, Innovation & Technology" if user.business_unit.startswith("DSIT") else "Cabinet Office"
-        business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(department=department,
-                                                                     business_unit=user.business_unit)
+        if user.email.endswith("no10.gov.uk"):
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Number 10",
+                business_unit=user.business_unit,
+            )
+        elif user.email.endswith("dsit.gov.uk"):
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Cabinet Office",
+                business_unit=user.business_unit,
+            )
+        else:
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Department for Science, Innovation & Technology",
+                business_unit=user.business_unit,
+            )
+        user.new_business_unit = business_unit
+        user.save()
 
 
 class Migration(migrations.Migration):
