@@ -104,6 +104,11 @@ class DepartmentBusinessUnit(UUIDPrimaryKeyBase):
     )
     business_unit = models.CharField(max_length=128, help_text="Business Unit")
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["department", "business_unit"], name="department-business_unit-unique"),
+        ]
+
     def __str__(self):
         return f"{self.department} - {self.business_unit}"
 
