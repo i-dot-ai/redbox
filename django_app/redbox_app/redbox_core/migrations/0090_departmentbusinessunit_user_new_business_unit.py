@@ -8,7 +8,7 @@ from django.db.models import Count
 
 def back_populate_department_business_unit(apps, schema_editor):
     DepartmentBusinessUnit = apps.get_model("redbox_core", "DepartmentBusinessUnit")
-    DepartmentBusinessUnit.objects.delete()
+    DepartmentBusinessUnit.objects.all().delete()
 
     User = apps.get_model("redbox_core", "User")
     for user in User.objects.all():
