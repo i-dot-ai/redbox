@@ -18,7 +18,7 @@
 
   {% if message.role == "ai" %}
     {% set footer %}
-      <chat-message-footer data-id="{{ message.id }}"></chat-message-footer>
+      <chat-message-footer data-id="{{ message.id }}" data-start-text="{{ message.text [0:30] }}"></chat-message-footer>
     {% endset %}
     {{ footer | render_lit }}
   {% endif %}

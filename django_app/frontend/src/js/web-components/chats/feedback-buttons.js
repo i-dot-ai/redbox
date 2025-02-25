@@ -27,8 +27,9 @@ export class FeedbackButtons extends HTMLElement {
 
     this.innerHTML = `
         <div class="feedback__container feedback__container--1" tabindex="-1">
-            <h3 class="feedback__heading">Rate</h3>
-            <div class="feedback__star-container">
+            <h3 class="feedback__heading" aria-hidden="true">Rate</h3>
+            <fieldset class="feedback__star-container">
+                <legend class="govuk-visually-hidden">Rate response starting ${this.dataset.startText}</legend>
                 <span class="feedback__star-help-text" aria-hidden="true">Not helpful</span>
                 <button class="feedback__star-button" data-rating="1" type="button">
                     ${starIcon}
@@ -51,7 +52,7 @@ export class FeedbackButtons extends HTMLElement {
                     <span class="govuk-visually-hidden">5 stars out of 5 (very helpful)</span>
                 </button>
                 <span class="feedback__star-help-text" aria-hidden="true">Very helpful</span>
-            </div>
+            </fieldset>
         </div>
         <div class="feedback__container feedback__container--2" hidden tabindex="-1">
             <div class="feedback__response-container">
