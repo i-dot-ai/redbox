@@ -76,8 +76,8 @@
         </chat-title>
 
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-models="{{ llm_options | to_json }}">
-
-          <div class="rb-chat-message__container js-message-container">
+          
+          <ol aria-label="Redbox conversation" class="rb-chat-message__container js-message-container">
 
             {# SSR messages #}
             {% for message in messages %}
@@ -87,7 +87,9 @@
               {# Display uploaded documents #}
               {% if message.role == 'user' %}
                 {% set uploaded_documents %}
-                  <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
+                  <li>
+                    <document-container data-chatid="{{ chat_id }}" data-docs="{{ current_chat.file_set.all() | filter_docs(messages, loop.index0) }}"></document-container>
+                  </li>
                 {% endset %}
                 {{ uploaded_documents | render_lit }}
               {% endif %}
@@ -96,7 +98,7 @@
 
             {# CSR messages are inserted here #}
 
-          </div>
+          </ol>
 
         </chat-controller>
 

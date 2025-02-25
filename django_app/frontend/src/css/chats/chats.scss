@@ -134,7 +134,9 @@ chat-message {
 }
 
 .rb-chat-message__container {
+  list-style-type: none;
   margin-top: -1rem;
+  padding: 0;
 }
 .govuk-main-wrapper:has(.rb-chat-input) {
   padding-bottom: 0;
