@@ -107,6 +107,11 @@ class DepartmentBusinessUnit(UUIDPrimaryKeyBase):
     def __str__(self):
         return f"{self.department} - {self.business_unit}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["department", "business_unit"], name="department-business_unit-unique"),
+        ]
+
 
 class User(BaseUser, UUIDPrimaryKeyBase):
     class UserGrade(models.TextChoices):
