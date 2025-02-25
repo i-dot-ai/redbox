@@ -19,12 +19,12 @@ def back_populate_department_business_unit(apps, schema_editor):
             )
         elif user.email.endswith("dsit.gov.uk"):
             business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
-                department="Cabinet Office",
+                department="Department for Science, Innovation & Technology",
                 business_unit=user.business_unit,
             )
         else:
             business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
-                department="Department for Science, Innovation & Technology",
+                department="Cabinet Office",
                 business_unit=user.business_unit,
             )
         user.new_business_unit = business_unit
