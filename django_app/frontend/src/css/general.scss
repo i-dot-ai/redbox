@@ -108,6 +108,9 @@ body {
 .govuk-link:visited {
   color: var(--iai-product-colour);
 }
+.iai-top-nav__mobile-button {
+  background-color: black;
+}
 @media (max-width: 1019px) {
   .iai-footer__list {
     margin-top: 0.5rem;
