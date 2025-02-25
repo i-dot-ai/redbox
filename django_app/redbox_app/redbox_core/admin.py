@@ -12,7 +12,9 @@ User = get_user_model()
 
 
 class DepartmentBusinessUnitAdmin(admin.ModelAdmin):
-    pass
+    list_filter = [
+        "department",
+    ]
 
 
 class ChatLLMBackendAdmin(admin.ModelAdmin):
@@ -139,7 +141,7 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
         "is_developer",
         "last_login",
     ]
-    list_filter = ["business_unit", "grade", "profession"]
+    list_filter = ["business_unit__department", "business_unit__business_unit", "grade", "profession"]
     date_hierarchy = "last_login"
 
     @admin.display(ordering="ai_experience", description="AI Experience")
