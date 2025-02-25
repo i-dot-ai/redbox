@@ -4,89 +4,36 @@ import django.db.models.deletion
 import uuid
 from django.db import migrations, models
 
+
 def back_populate_department_business_unit(apps, schema_editor):
     DepartmentBusinessUnit = apps.get_model("redbox_core", "DepartmentBusinessUnit")
-    for business_unit in [
-        "Borders Unit",
-        "Central Costs",
-        "Central Digital and Data Office",
-        "Civil Service Commission",
-        "Civil Service Human Resources",
-        "CO Chief Operating Officer",
-        "CO Digital",
-        "CO HMT Commercial",
-        "CO People and Places",
-        "CO Strategy, Finance, and Performance",
-        "Commercial Models",
-        "COP Presidency",
-        "Covid Inquiry",
-        "Crown Commercial Service",
-        "CS Modernisation and Reform Unit",
-        "Delivery Group",
-        "Economic and Domestic Secretariat",
-        "Equality and Human Rights Commission",
-        "Equality Hub",
-        "Flexible CS Pool",
-        "Geospatial Commission",
-        "Government Business Services",
-        "Government Commercial and Grants Function",
-        "Government Communication Service",
-        "Government Digital Service",
-        "Government in Parliament",
-        "Government Legal Department",
-        "Government People Group",
-        "Government Property Agency",
-        "Government Security Group",
-        "Grenfell Inquiry",
-        "Infected Blood Inquiry",
-        "Infrastructure and Projects Authority",
-        "Inquiries Sponsorship Team",
-        "Intelligence and Security Committee",
-        "Joint Intelligence Organisation",
-        "National Security Secretariat",
-        "Office for Veterans' Affairs",
-        "Office of Government Property",
-        "Office of the Registrar of Consultant Lobbyists",
-        "Prime Minister's Office",
-        "Propriety and Constitution Group",
-        "Public Bodies and Priority Projects Unit",
-        "Public Inquiry Response Unit",
-        "Public Sector Fraud Authority",
-        "UKSV",
-        "Union and Constitution Group",
-        "Other",
-    ]:
-        DepartmentBusinessUnit.objects.create(department="Cabinet Office", business_unit=business_unit)
-
-    for business_unit in [
-        "DSIT Data Science & Data Transformation",
-        "DSIT Media & Digital",
-        "DSIT Strategic Engagement",
-        "DSIT Strategy, Planning & Insights",
-        "DSIT Transformation",
-        "DSIT Telecommunications Policy",
-        "DSIT AI Policy Analysis",
-        "DSIT AI Security Institute",
-        "DSIT Transformation & Innovation Directorate",
-        "DSIT AI Regulation",
-        "DSIT Project Delivery Profession",
-        "DSIT Expert Exchange Programme",
-        "Other",
-    ]:
-        DepartmentBusinessUnit.objects.create(
-            department="Department for Science, Innovation & Technology", business_unit=business_unit
-        )
-
-    DepartmentBusinessUnit.objects.create(
-        department="Department for Science, Innovation & Technology", business_unit=business_unit
-    )
+    DepartmentBusinessUnit.objects.all().delete()
 
     User = apps.get_model("redbox_core", "User")
-    for user in User.objects.all():
-        try:
-            user.new_business_unit = DepartmentBusinessUnit.objects.get(business_unit=user.business_unit)
-        except DepartmentBusinessUnit.DoesNotExist:
-            pass
+    for user in User.objects.filter(business_unit__isnull=False):
+        if user.email.endswith("no10.gov.uk"):
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Number 10",
+                business_unit=user.business_unit,
+            )
+        elif user.email.endswith("dsit.gov.uk"):
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Department for Science, Innovation & Technology",
+                business_unit=user.business_unit,
+            )
+        else:
+            business_unit, _ = DepartmentBusinessUnit.objects.get_or_create(
+                department="Cabinet Office",
+                business_unit=user.business_unit,
+            )
+        user.new_business_unit = business_unit
+        user.save()
+
+    other_business_unit = DepartmentBusinessUnit.objects.create(
+        department="Other Department",
+        business_unit="Other",
+    )
+    User.objects.filter(business_unit__isnull=True).update(new_business_unit = other_business_unit)
 
 
 class Migration(migrations.Migration):
