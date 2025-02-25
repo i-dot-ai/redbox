@@ -193,14 +193,14 @@ main:has(.iai-chat-bubble[data-role="ai"]) .exit-feedback {
   + label
   .exit-feedback__thumb-icon--up
   .exit-feedback__thumb-icon-fill {
-  fill: #84b8b3;
+  fill: var(--iai-colour-secondary-teal);
 }
 .exit-feedback
   input:checked
   + label
   .exit-feedback__thumb-icon--down
   .exit-feedback__thumb-icon-fill {
-  fill: #c08181;
+  fill: var(--iai-product-colour);
 }
 .exit-feedback__radio-container {
   height: 1.5rem;
