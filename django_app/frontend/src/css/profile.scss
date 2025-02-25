@@ -51,6 +51,9 @@
 .experience-cards input:checked + label:hover::before {
   border-width: 0;
 }
+.experience-cards input:focus-visible + label {
+  border: 2px solid black;
+}
 .experience-cards .govuk-radios__item:nth-child(1) label::before {
   content: url("/static/icons/ai-experience-cards/Curious.svg");
 }
