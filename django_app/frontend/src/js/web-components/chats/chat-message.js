@@ -151,6 +151,7 @@ export class ChatMessage extends HTMLElement {
       } else if (response.type === "end") {
         let chatMessageFooter = document.createElement("chat-message-footer");
         chatMessageFooter.dataset.id = response.data.message_id;
+        chatMessageFooter.dataset.startText = this.querySelector("markdown-converter")?.textContent?.substring(0, 30);
         this.parentElement?.appendChild(chatMessageFooter);
 
         const chatResponseEndEvent = new CustomEvent("chat-response-end", {

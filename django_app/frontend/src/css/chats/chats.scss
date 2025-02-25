@@ -190,6 +190,10 @@ chat-message {
   margin-bottom: 1.5rem;
   margin-top: 0.75rem;
 }
+.rb-chat-message-footer__actions-container fieldset {
+  border: 0;
+  padding: 0;
+}
 
 .rb-copy-text-button {
   align-items: center;
