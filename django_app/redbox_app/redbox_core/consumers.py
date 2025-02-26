@@ -9,6 +9,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from openai import RateLimitError
+from uwotm8 import convert_american_to_british_spelling
 
 from redbox import Redbox
 from redbox_app.redbox_core import error_messages
@@ -16,7 +17,6 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     get_chat_session,
 )
-from uwotm8 import convert_american_to_british_spelling
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
