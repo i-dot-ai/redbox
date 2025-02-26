@@ -83,7 +83,7 @@ def big_llm_backend():
 
 
 @pytest.fixture()
-def create_user():
+def create_user(gov_business_services):
     def _create_user(
         email,
         date_joined_iso,
@@ -93,6 +93,7 @@ def create_user():
         profession=User.Profession.IA,
         ai_experience=User.AIExperienceLevel.EXPERIENCED_NAVIGATOR,
     ):
+        business_unit = business_unit or gov_business_services
         date_joined = datetime.fromisoformat(date_joined_iso).astimezone(UTC)
         return User.objects.create_user(
             email=email,
@@ -123,8 +124,10 @@ def bob(create_user):
 
 
 @pytest.fixture()
-def peter_rabbit():
-    return User.objects.create_user(email="peter.rabbit@example.com", password="P455W0rd")
+def peter_rabbit(gov_business_services):
+    return User.objects.create_user(
+        email="peter.rabbit@example.com", password="P455W0rd", business_unit=gov_business_services
+    )
 
 
 @pytest.fixture()
