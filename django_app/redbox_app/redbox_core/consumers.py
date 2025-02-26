@@ -19,6 +19,7 @@ from redbox_app.redbox_core.models import (
 )
 
 User = get_user_model()
+
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
