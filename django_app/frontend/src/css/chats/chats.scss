@@ -215,6 +215,7 @@ chat-message {
 
 
 message-input {
+  display: block;
   position: relative;
 }
 message-input label {
@@ -226,7 +227,7 @@ message-input label {
   left: 0.25rem;
   padding: 0 0.25rem;
   position: absolute;
-  top: -2.625rem;
+  top: -1.25rem;
 }
 message-input:has(textarea:placeholder-shown) label {
   display: none;
