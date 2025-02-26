@@ -17,7 +17,7 @@ export class AnimatedLogo extends RedboxElement {
 
   render() {
     return html`
-      <img class=${this.jsInitialised ? 'rb-icon rb-icon--animated' : 'rb-icon'} src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+      <img class="rb-icon rb-icon--animated" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
     `;
   }
 
