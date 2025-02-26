@@ -16,6 +16,7 @@ from redbox_app.redbox_core.models import (
     ChatMessage,
     get_chat_session,
 )
+from uwotm8 import convert_american_to_british_spelling
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             message = await ChatMessage.objects.acreate(
                 chat=chat,
-                text=state.content,
+                text=convert_american_to_british_spelling(state.content),
                 role=ChatMessage.Role.ai,
                 delay=delay,
             )
@@ -86,4 +87,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps(message, default=str))
 
     async def handle_text(self, response: str) -> str:
-        await self.send_to_client("text", response)
+        await self.send_to_client("text", convert_american_to_british_spelling(response))
