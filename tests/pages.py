@@ -325,7 +325,7 @@ class ChatsPage(SignedInBasePage):
 
     @property
     def expected_page_title(self) -> str:
-        return "Chats - Redbox"
+        return "New chat - Chats - Redbox"
 
     @property
     def selected_llm(self) -> str:
