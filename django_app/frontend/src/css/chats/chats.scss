@@ -134,7 +134,9 @@ chat-message {
 }
 
 .rb-chat-message__container {
+  list-style-type: none;
   margin-top: -1rem;
+  padding: 0;
 }
 .govuk-main-wrapper:has(.rb-chat-input) {
   padding-bottom: 0;
@@ -188,6 +190,10 @@ chat-message {
   margin-bottom: 1.5rem;
   margin-top: 0.75rem;
 }
+.rb-chat-message-footer__actions-container fieldset {
+  border: 0;
+  padding: 0;
+}
 
 .rb-copy-text-button {
   align-items: center;
@@ -206,6 +212,26 @@ chat-message {
 @import "./feedback.scss";
 
 @import "./canned-prompts.scss";
+
+
+message-input {
+  display: block;
+  position: relative;
+}
+message-input label {
+  background-color: white;
+  border-radius: 0.25rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: bold;
+  left: 0.25rem;
+  padding: 0 0.25rem;
+  position: absolute;
+  top: -1.25rem;
+}
+message-input:has(textarea:placeholder-shown) label {
+  display: none;
+}
 
 
 .rb-send-button svg {

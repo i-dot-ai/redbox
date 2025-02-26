@@ -67,15 +67,14 @@ body {
   0% {
     transform: rotate(0deg);
   }
-  20% {
-    transform: rotate(90deg);
-  }
   100% {
     transform: rotate(90deg);
   }
 }
 .rb-icon--animated {
-  animation: rotateIcon 5s infinite;
+  animation-delay: 0.5s;
+  animation-duration: 1s;
+  animation-name: rotateIcon;
 }
 @media (prefers-reduced-motion) {
   .rb-icon--animated {
@@ -107,6 +106,12 @@ body {
 }
 .govuk-link:visited {
   color: var(--iai-product-colour);
+}
+.iai-top-nav__mobile-button {
+  background-color: black;
+}
+.iai-top-nav__mobile-button-bar {
+  border-bottom: 3px solid white; /* For high contrast modes */
 }
 @media (max-width: 1019px) {
   .iai-footer__list {

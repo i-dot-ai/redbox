@@ -72,16 +72,22 @@ class ChatController extends HTMLElement {
       );
       userMessage.setAttribute("data-text", userText);
       userMessage.setAttribute("data-role", "user");
-      this.messageContainer?.insertBefore(userMessage, insertPosition);
+      let userMessageListItem = document.createElement("li");
+      userMessageListItem.appendChild(userMessage);
+      this.messageContainer?.insertBefore(userMessageListItem, insertPosition);
 
       let documentContainer = document.createElement("document-container");
-      this.messageContainer?.insertBefore(documentContainer, insertPosition);
+      let documentContainerListItem = document.createElement("li");
+      documentContainerListItem.appendChild(documentContainer);
+      this.messageContainer?.insertBefore(documentContainerListItem, insertPosition);
 
       let aiMessage = /** @type {import("./chat-message").ChatMessage} */ (
         document.createElement("chat-message")
       );
       aiMessage.setAttribute("data-role", "ai");
-      this.messageContainer?.insertBefore(aiMessage, insertPosition);
+      let aiMessageListItem = document.createElement("li");
+      aiMessageListItem.appendChild(aiMessage);
+      this.messageContainer?.insertBefore(aiMessageListItem, insertPosition);
 
       const llm =
         /** @type {HTMLInputElement | null}*/ (

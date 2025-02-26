@@ -1,27 +1,28 @@
 {% macro message_box(message) %}
 
-<div
-  class="iai-chat-bubble govuk-body {{ classes }}"
-  data-role="{{ message.role }}" tabindex="-1">
-  <div class="iai-chat-bubble__header">
-    <div class="iai-chat-bubble__role">
-      {% if message.role == "ai" %}
-        <img src="/static/icons/Icon_Redbox_200.svg" alt=""/> Redbox
-      {% else %}
-        You
-      {% endif %}
+<li>
+  <div class="iai-chat-bubble govuk-body {{ classes }}" data-role="{{ message.role }}" tabindex="-1">
+    <div class="iai-chat-bubble__header">
+      <div class="iai-chat-bubble__role">
+        {% if message.role == "ai" %}
+          <img src="/static/icons/Icon_Redbox_200.svg" alt=""/> Redbox
+        {% else %}
+          You
+        {% endif %}
+      </div>
     </div>
+
+    <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>
+
   </div>
 
-  <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>
+  {% if message.role == "ai" %}
+    {% set footer %}
+      <chat-message-footer data-id="{{ message.id }}" data-start-text="{{ message.text [0:30] }}"></chat-message-footer>
+    {% endset %}
+    {{ footer | render_lit }}
+  {% endif %}
 
-</div>
-
-{% if message.role == "ai" %}
-  {% set footer %}
-    <chat-message-footer data-id="{{ message.id }}"></chat-message-footer>
-  {% endset %}
-  {{ footer | render_lit }}
-{% endif %}
+</li>
 
 {% endmacro %}

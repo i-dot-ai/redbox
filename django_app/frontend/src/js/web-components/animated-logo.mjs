@@ -4,22 +4,20 @@ import { RedboxElement } from "./redbox-element.mjs";
 
 export class AnimatedLogo extends RedboxElement {
 
-  static properties = {
-    stopped: { type: Boolean, state: true },
-  };
-
   connectedCallback() {
     super.connectedCallback();
-    window.addEventListener("keydown", (evt) => {
-      if (evt.key === "Escape") {
-        this.stopped = true;
-      }
+    this.addEventListener("mouseenter", (evt) => {
+      let img = this.querySelector("img");
+      img?.classList.remove("rb-icon--animated");
+      window.setTimeout(() => {
+        img?.classList.add("rb-icon--animated");
+      }, 1);
     });
   }
 
   render() {
     return html`
-      <img class=${this.stopped || !this.jsInitialised ? 'rb-icon' : 'rb-icon rb-icon--animated'} src="/static/icons/Icon_Redbox_200.svg" alt=""/>
+      <img class="rb-icon rb-icon--animated" src="/static/icons/Icon_Redbox_200.svg" alt=""/>
     `;
   }
 

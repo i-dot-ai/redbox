@@ -7,6 +7,11 @@ export class DocumentContainer extends RedboxElement {
     docs: { type: Array, attribute: "data-docs" },
   };
 
+  constructor() {
+    super();
+    this.docs = [];
+  }
+
   async addDocuments(docs) {
     this.docs = docs;
     this.requestUpdate();
@@ -15,6 +20,7 @@ export class DocumentContainer extends RedboxElement {
   render() {
     return html`
       <div class="rb-uploaded-docs">
+        <p class="govuk-visually-hidden">You uploaded ${this.docs.length} file${this.docs.length !== 1 ? 's' : ''} at this point</p>
         <ul>
           ${this.docs?.map(
             (doc) => html`

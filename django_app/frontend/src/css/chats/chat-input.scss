@@ -8,15 +8,24 @@
   margin-top: 1rem;
   max-width: 94%;
   padding: 0.75rem 1rem;
-  position: sticky;
   right: 0;
 }
+@media (min-height: 400px) {
+  .rb-chat-input {
+    position: sticky;
+  }
+}
+
 .rb-chat-input__container {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
   justify-content: space-between;
+}
+@media (min-height: 768px) {
+  .rb-chat-input__container {
+    flex-wrap: wrap;
+  }
 }
 
 /* Top container - left */
