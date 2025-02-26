@@ -7,6 +7,11 @@ export class DocumentContainer extends RedboxElement {
     docs: { type: Array, attribute: "data-docs" },
   };
 
+  constructor() {
+    super();
+    this.docs = [];
+  }
+
   async addDocuments(docs) {
     this.docs = docs;
     this.requestUpdate();

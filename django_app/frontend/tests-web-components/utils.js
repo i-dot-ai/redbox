@@ -57,6 +57,7 @@ const sendMessage = async (page, message) => {
 };
 
 const uploadDocument = async (page) => {
+  await page.waitForSelector('input[type="file"]', { state: 'attached' });
   await page.setInputFiles('input[type="file"]', "./test-upload.html");
   const fileStatus = page.locator("file-status");
   await fileStatus.waitFor();
