@@ -67,7 +67,10 @@ body {
   0% {
     transform: rotate(0deg);
   }
-  20% {
+  10% {
+    transform: rotate(0deg);
+  }
+  30% {
     transform: rotate(90deg);
   }
   100% {
@@ -75,7 +78,7 @@ body {
   }
 }
 .rb-icon--animated {
-  animation: rotateIcon 5s infinite;
+  animation: rotateIcon 5s;
 }
 @media (prefers-reduced-motion) {
   .rb-icon--animated {
