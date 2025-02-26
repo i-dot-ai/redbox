@@ -337,6 +337,12 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
+        if self.business_unit is None:
+            self.business_unit, _ = DepartmentBusinessUnit.objects.gert_or_create(
+                department=DepartmentBusinessUnit.Department.OTHER,
+                business_unit="other",
+            )
+
         super().save(*args, **kwargs)
 
     def get_initials(self) -> str:
