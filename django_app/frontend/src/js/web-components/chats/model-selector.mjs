@@ -32,6 +32,7 @@ export class ModelSelector extends RedboxElement {
   render() {
     if (this.jsInitialised) {
       return html`
+        <div class="rb-model-selector__label">Model: </div>
         <div class="rb-model-selector__select" @click=${this.#toggle} @keydown=${this.#keypress} @blur=${this.#blur} aria-controls="models-list" aria-expanded=${this.expanded ? "true" : "false"} aria-haspopup="listbox" aria-label="Model" role="combobox" tabindex="0" aria-activedescendant="model-option-${this.activeOption}">
           ${this.options[this.selectedOption].name}
           <span aria-hidden="true">${this.expanded ? "▲" : "▼"}</span>

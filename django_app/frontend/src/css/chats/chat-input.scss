@@ -15,12 +15,17 @@
     position: sticky;
   }
 }
+
 .rb-chat-input__container {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
   justify-content: space-between;
+}
+@media (min-height: 768px) {
+  .rb-chat-input__container {
+    flex-wrap: wrap;
+  }
 }
 
 /* Top container - left */

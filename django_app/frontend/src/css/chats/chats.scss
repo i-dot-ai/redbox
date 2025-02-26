@@ -214,6 +214,25 @@ chat-message {
 @import "./canned-prompts.scss";
 
 
+message-input {
+  position: relative;
+}
+message-input label {
+  background-color: white;
+  border-radius: 0.25rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: bold;
+  left: 0.25rem;
+  padding: 0 0.25rem;
+  position: absolute;
+  top: -2.625rem;
+}
+message-input:has(textarea:placeholder-shown) label {
+  display: none;
+}
+
+
 .rb-send-button svg {
   background-color: white;
   border-radius: 100%;

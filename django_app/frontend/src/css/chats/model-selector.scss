@@ -1,10 +1,15 @@
 
 .rb-model-selector {
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
   flex-shrink: 0;
   margin-left: 0.5rem;
   position: relative;
+}
+.rb-model-selector__label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-right: 0.25rem;
 }
 .rb-model-selector__select {
   align-items: center;
