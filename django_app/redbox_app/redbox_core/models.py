@@ -262,7 +262,6 @@ class User(BaseUser, UUIDPrimaryKeyBase):
 
     username = None
     password = models.CharField("password", max_length=128, blank=True, null=True)
-    old_business_unit = models.CharField(null=True, blank=True, max_length=64)
     business_unit = models.ForeignKey(DepartmentBusinessUnit, null=True, blank=True, on_delete=models.SET_NULL)
     grade = models.CharField(null=True, blank=True, max_length=3, choices=UserGrade)
     name = models.CharField(null=True, blank=True)
@@ -634,8 +633,8 @@ class ChatMessage(UUIDPrimaryKeyBase):
             "id": str(self.id),
             "chat_id": str(self.chat.id),
             "user_id": str(self.chat.user.id),
-            "department": self.chat.user.business_unit.department,
-            "user_business_unit": self.chat.user.business_unit.business_unit,
+            "department": self.chat.user.business_unit.department if self.chat.user.business_unit else None,
+            "user_business_unit": self.chat.user.business_unit.business_unit if self.chat.user.business_unit else None,
             "user_grade": self.chat.user.grade,
             "user_profession": self.chat.user.profession,
             "user_ai_experience": self.chat.user.ai_experience,
