@@ -76,7 +76,7 @@
         </chat-title>
 
         <chat-controller class="iai-chat-container" data-stream-url="{{ streaming.endpoint }}" data-models="{{ llm_options | to_json }}">
-          
+
           <ol aria-label="Redbox conversation" class="rb-chat-message__container js-message-container">
 
             {# SSR messages #}
@@ -107,9 +107,11 @@
       {% if not messages %}
 
         {# Notice area #}
+        {% current_chat.user.business_unit.department == 'Cabinet Office' %}
         <div class="rb-notice">
           <p>The Cabinet Office Digital Training Team needs your help to shape the Redbox training offered across the Cabinet Office. Please take a moment to complete <a class="govuk-link govuk-!-display-inline-block" href="https://docs.google.com/forms/d/e/1FAIpQLSdNkRUZbt2-qQiiI-4WuRbwiu7ruAkavaD0atQk0TxbsDIcJQ/viewform?usp=dialog" rel="noopener">this 5-minute survey</a> by 28th February.</p>
         </div>
+        {% endif %}
 
         {% set canned_prompts %}
             <canned-prompts class="chat-options"></canned-prompts>
