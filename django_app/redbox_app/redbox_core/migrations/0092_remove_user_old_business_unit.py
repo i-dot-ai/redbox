@@ -5,7 +5,6 @@ from django.db import migrations
 
 def back_populate_department_business_unit(apps, schema_editor):
     DepartmentBusinessUnit = apps.get_model("redbox_core", "DepartmentBusinessUnit")
-    DepartmentBusinessUnit.objects.all().delete()
 
     User = apps.get_model("redbox_core", "User")
 

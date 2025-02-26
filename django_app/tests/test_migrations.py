@@ -433,3 +433,31 @@ def test_0073_chatmessage_new_source_files(original_file, migrator):
     new_chat_message = NewChatMessage.objects.get(id=chat_message.id)
     assert new_chat_message.source_files.count() == 1
     assert new_chat_message.source_files.first().id == file.id
+
+def test_0092_remove_user_old_business_unit(migrator):
+    old_state = migrator.apply_initial_migration(("redbox_core", "0091_alter_departmentbusinessunit_options_and_more"))
+
+    DepartmentBusinessUnit = old_state.apps.get_model("redbox_core", "DepartmentBusinessUnit")
+    User = old_state.apps.get_model("redbox_core", "User")
+
+    cod, _ = DepartmentBusinessUnit.objects.get_or_create(department ="Cabinet Office", business_unit="Digital")
+    other, _ = DepartmentBusinessUnit.objects.get_or_create(department ="Other Department", business_unit="Other")
+    cod_user = User.objects.create(email="cod@cabinetoffice.gov.uk", business_unit = cod)
+    other_user = User.objects.create(email="other@cabinetoffice.gov.uk", business_unit = other)
+
+    assert cod_user.business_unit.department == cod.department
+    assert cod_user.business_unit.business_unit == cod.business_unit
+    assert other_user.business_unit.department == other.department
+    assert other_user.business_unit.business_unit == other.business_unit
+
+    new_state = migrator.apply_tested_migration(
+        ("redbox_core", "0092_remove_user_old_business_unit"),
+    )
+
+    NewUser = new_state.apps.get_model("redbox_core", "User")
+    new_cod_user = NewUser.objects.get(id=cod_user.id)
+    new_other_user = NewUser.objects.get(id=other_user.id)
+    assert new_cod_user.business_unit.department == cod.department
+    assert new_cod_user.business_unit.business_unit == cod.business_unit
+    assert new_other_user.business_unit.department == cod.department
+    assert new_other_user.business_unit.business_unit == other.business_unit
