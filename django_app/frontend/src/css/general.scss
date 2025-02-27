@@ -100,27 +100,6 @@ body {
 }
 @import "../../node_modules/i.ai-design-system/dist/styles.scss";
 
-/* To add to i.AI Design System */
-.govuk-link {
-  word-break: break-word;
-}
-.govuk-link:visited {
-  color: var(--iai-product-colour);
-}
-.iai-top-nav__mobile-button {
-  background-color: black;
-}
-.iai-top-nav__mobile-button-bar {
-  border-bottom: 3px solid white; /* For high contrast modes */
-}
-@media (max-width: 1019px) {
-  .iai-footer__list {
-    margin-top: 0.5rem;
-  }
-  .iai-footer__list-item {
-    margin-top: 0.25rem;
-  }
-}
 
 @import "./profile.scss";
 
