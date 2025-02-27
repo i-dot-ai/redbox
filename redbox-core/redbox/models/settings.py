@@ -50,13 +50,6 @@ class Settings(BaseSettings):
     elastic: ElasticCloudSettings | ElasticLocalSettings | None = None
     elastic_root_index: str = "redbox-data"
 
-    kibana_system_password: str = "redboxpass"
-    metricbeat_internal_password: str = "redboxpass"
-    filebeat_internal_password: str = "redboxpass"
-    heartbeat_internal_password: str = "redboxpass"
-    monitoring_internal_password: str = "redboxpass"
-    beats_system_password: str = "redboxpass"
-
     minio_host: str = "minio"
     minio_port: int = 9000
     aws_access_key: str | None = None
