@@ -19,6 +19,8 @@ import "./web-components/documents/document-upload.mjs";
 import "./web-components/documents/file-status.mjs";
 import "./web-components/documents/upload-container.mjs";
 
+import "./tour.js";
+
 document.addEventListener("chat-response-end", (evt) => {
   
   // Update URL when a new chat is created

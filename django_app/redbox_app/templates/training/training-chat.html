@@ -1,0 +1,43 @@
+{% extends "/training/training-base.html" %}
+
+{% set pageTitle = "Chat - Training" %}
+
+{% block training_content %}
+
+  <h2 class="govuk-heading-m">Chat</h2>
+  <div class="rb-training__flex-container">
+    <div>
+      <p class="govuk-body">The main chats page allows you to start a new chat straight away.</p>
+      <p class="govuk-body">There are 3 example prompts to help you get started, or you can type your question directly into the text box labelled "Ask anything".</p>
+      <p class="govuk-body">Once you are ready, click send or press the enter key. This will generate a response from Redbox.</p>
+    </div>
+    <img class="rb-training__image rb-training__image--border" src="{{ static("icons/training/chats-page.png")}} " alt="A screenshot of the chats page" loading="lazy" width="400"/>
+  </div>
+
+  <h3 class="govuk-heading-s govuk-!-margin-top-6">Creating new chats</h3>
+  <p class="govuk-body">You can continue asking questions in your current chat. Alternatively, you can create a new chat by clicking the "New chat" button.</p>
+
+  <h3 class="govuk-heading-s govuk-!-margin-top-6">Chat history</h3>
+  <div class="rb-training__flex-container">
+    <img class="rb-training__image" src="{{ static("icons/training/recent-chats.png")}} " alt="The recent chats sidebar. Clicking on the 3 dots gives you options to delete, rename, and print your chat." loading="lazy" width="240"/>
+    <div>
+      <p class="govuk-body">As you create chats you will notice that these appear in the "Recent chats" panel.</p>
+      <p class="govuk-body">Clicking on any of these will take you to that chat, where you can continue the chat, and look back at past Redbox responses.</p>
+      <p class="govuk-body">By clicking on the three dots next to a chat, Redbox allows you to delete a chat, rename it, and print it.</p>
+      <p class="govuk-body">Your chats will be saved in Redbox for 30 days. After that, they will be deleted for security and privacy reasons.</p>
+    </div>
+  </div>
+
+  <h3 class="govuk-heading-s govuk-!-margin-top-6">Prompt hints and tips</h3>
+  <p class="govuk-body">A prompt is simply a question or command you give to Redbox. The way you phrase your prompt matters because it affects how relevant and accurate the answer will be.</p>
+  <ul class="govuk-list govuk-list--bullet govuk-body">
+    <li><strong>Be specific and clear:</strong> Identify the exact task, specify the source and provide context.</li>
+    <li class="govuk-!-margin-top-2"><strong>Use an action word:</strong> Direct the tool on what you need the output to be. Examples include: "Summarise", "Describe", "Write".</li>
+    <li class="govuk-!-margin-top-2"><strong>Use complete sentences with punctuation</strong></li>
+    <li class="govuk-!-margin-top-2"><strong>Do not use abbreviations</strong></li>
+    <li class="govuk-!-margin-top-2"><strong>Refine and iterate prompts during your conversation</strong></li>
+    <li class="govuk-!-margin-top-2"><strong>Tell Redbox what you want and do not want</strong></li>
+    <li class="govuk-!-margin-top-2"><strong>Validate your response</strong></li>
+  </ul>
+
+{% endblock %}

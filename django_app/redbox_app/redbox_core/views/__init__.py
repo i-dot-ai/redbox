@@ -24,6 +24,7 @@ from redbox_app.redbox_core.views.info_views import (
 from redbox_app.redbox_core.views.metrics_view import download_metrics
 from redbox_app.redbox_core.views.misc_views import SecurityTxtRedirectView, health, homepage_view
 from redbox_app.redbox_core.views.signup_views import Signup1, Signup2, Signup3, Signup4
+from redbox_app.redbox_core.views.training_views import training_welcome_view, training_chat_view, training_documents_view, training_models_view
 
 __all__ = [
     "download_metrics",
@@ -51,4 +52,8 @@ __all__ = [
     "Signup2",
     "Signup3",
     "Signup4",
+    "training_welcome_view",
+    "training_chat_view",
+    "training_documents_view",
+    "training_models_view",
 ]

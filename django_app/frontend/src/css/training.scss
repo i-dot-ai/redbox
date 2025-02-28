@@ -1,0 +1,82 @@
+.rb-training__title {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+.rb-training__title img {
+  width: 3.5rem;
+}
+
+.rb-training__image--border {
+  border: 1px solid #000;
+}
+
+@media (min-width: 1024px) {
+  .rb-training__flex-container {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .rb-training__flex-container > div p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+
+
+/* Interactive demo */
+.introjs-tooltip {
+  width: 18rem
+}
+.introjs-tooltip-header {
+  padding: 1rem;
+  padding-bottom: 0;
+}
+.introjs-tooltip-title {
+  align-items: center;
+  display: flex;
+  font-size: 1rem;
+  gap: 0.5rem;
+}
+.introjs-tooltip-title::before {
+  background-image: url("/static/icons/Icon_Redbox_200.svg");
+  background-size: contain;
+  content: " ";
+  display: block;
+  height: 1.5rem;
+  width: 1.5rem;
+}
+.introjs-tooltiptext {
+  font-size: 0.875rem;
+}
+.introjs-bullets {
+  display: none;
+}
+.introjs-tooltip a:focus {
+  box-shadow: none;
+}
+.introjs-tooltip a:focus-visible {
+  outline: 2px solid #757575;
+}
+.introjs-skipbutton {
+  border-radius: 0.5rem;
+}
+.introjs-button {
+  border: 1px solid var(--iai-product-colour);
+  border-radius: 0.5rem;
+  font-weight: bold;
+  outline-offset: 2px;
+  text-shadow: none;
+}
+.introjs-button.introjs-disabled {
+  display: none;
+}
+.introjs-prevbutton, .introjs-prevbutton:focus {
+  background-color: transparent;
+  color: var(--iai-product-colour);
+}
+.introjs-nextbutton, .introjs-nextbutton:focus {
+  background-color: var(--iai-product-colour);
+  color: white;
+}

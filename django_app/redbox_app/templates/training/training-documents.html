@@ -1,0 +1,18 @@
+{% extends "/training/training-base.html" %}
+
+{% set pageTitle = "Documents - Training" %}
+
+{% block training_content %}
+
+<h2 class="govuk-heading-m">Documents</h2>
+
+<div class="rb-training__flex-container">
+  <img class="rb-training__image rb-training__image--border" src="{{ static("icons/training/add-file.png") }} " alt="A screenshot of the Add file button" loading="lazy" width="64"/>
+  <div>
+    <p class="govuk-body govuk-!-margin-bottom-2">You can attach documents to Redbox by pressing the Add file button.</p>
+    <p class="govuk-body govuk-!-margin-top-0">You can also drag-and-drop files directly onto the page.</p>
+  </div>
+</div>
+<p class="govuk-body">Once your files have uploaded you can write a prompt, asking questions of your uploaded documents. You do not need to upload your document to a chat more than once; Redbox keeps it for the remainder of the chat.</p>
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "macros/govuk-button.html" import govukButton %}
+
+
+{% block content %}
+  
+  <div class="govuk-width-container">
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-l govuk-!-margin-bottom-3 rb-training__title">
+          {% set animated_logo %}
+            <animated-logo></animated-logo>
+          {% endset %}
+          {{ animated_logo | render_lit }}
+          Redbox training
+        </h1>
+      </div>
+    </div>
+
+    <div class="govuk-grid-row govuk-!-margin-top-3">
+
+      <div class="govuk-grid-column-one-quarter">
+        <div class="iai-panel govuk-!-margin-bottom-7">
+          <nav>
+            <ol>
+              <li>
+                <a class="govuk-link" href="{{ url('training-welcome') }}">Welcome</a>
+              </li>
+              <li class="govuk-!-margin-top-3">
+                <a class="govuk-link" href="{{ url('training-chat') }}">Chat</a>
+              </li>
+              <li class="govuk-!-margin-top-3">
+                <a class="govuk-link" href="{{ url('training-documents') }}">Documents</a>
+              </li>
+              <li class="govuk-!-margin-top-3">
+                <a class="govuk-link" href="{{ url('training-models') }}">Models</a>
+              </li>
+            </ol>
+
+            {% if request.user.is_authenticated %}
+
+              {{ govukButton(
+                text="Exit training",
+                href=url('chats'),
+                classes="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-4 govuk-!-margin-top-4"
+              ) }}
+
+              {{ govukButton(
+                text="Interactive tour",
+                href="/chats/#tour",
+                classes="govuk-button govuk-!-margin-bottom-4 govuk-!-margin-left-4 govuk-!-margin-top-4"
+              ) }}
+
+            {% endif %}
+          </nav>
+        </div>
+      </div>
+
+      <div class="govuk-grid-column-three-quarters">
+        {% block training_content %} 
+        {% endblock %}
+      </div>
+    
+    </div>
+  </div>
+{% endblock %}

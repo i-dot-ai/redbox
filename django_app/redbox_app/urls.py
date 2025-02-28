@@ -61,6 +61,14 @@ admin_urlpatterns = [
     path("admin/", admin.site.urls),
 ]
 
+training_urlpatterns = [
+    path("training/", views.training_welcome_view, name="training"),
+    path("training/welcome", views.training_welcome_view, name="training-welcome"),
+    path("training/chat", views.training_chat_view, name="training-chat"),
+    path("training/documents", views.training_documents_view, name="training-documents"),
+    path("training/models", views.training_models_view, name="training-models"),
+]
+
 other_urlpatterns = [
     path("", views.homepage_view, name="homepage"),
     path("health/", views.health, name="health"),
@@ -81,7 +89,7 @@ api_url_patterns = [
 ]
 
 urlpatterns = (
-    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + admin_urlpatterns + api_url_patterns
+    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + admin_urlpatterns + api_url_patterns + training_urlpatterns
 )
 
 if settings.DEBUG:
