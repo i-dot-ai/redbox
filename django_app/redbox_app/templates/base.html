@@ -12,6 +12,10 @@
   <link rel="icon" sizes="any" href="{{static("icons/Icon_Redbox_200.svg")}}" type="image/svg+xml">
   <link rel="manifest" href="{{static("govuk-assets/manifest.json")}}">
 
+  {# Interactive tour #}
+  <script src="{{ static('js/libs/introjs.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ static('js/libs/introjs.min.css') }}" />
+
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" type="text/css" href="{{static('styles.css')}}" />
 
@@ -100,6 +104,7 @@
     {'text': 'Accessibility', 'url': url('accessibility-statement') },
     {'text': 'Support', 'url': url('support') },
     {'text': 'FAQs', 'url': url('faqs') },
+    {'text': 'Training', 'url': url('training') },
     {'text': 'Sitemap', 'url': url('sitemap') }
   ] %}
   <footer class="iai-footer">

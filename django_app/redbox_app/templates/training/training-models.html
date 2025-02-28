@@ -1,0 +1,12 @@
+{% extends "/training/training-base.html" %}
+
+{% set pageTitle = "Models - Training" %}
+
+{% block training_content %}
+
+<h2 class="govuk-heading-m">Models</h2>
+<p class="govuk-body">Redbox can work with different Large Language Models (LLMs).</p>
+<p class="govuk-body">Click on the Model select-box to choose a different LLM.</p>
+<img class="rb-training__image" src="{{ static("icons/training/model-selector.jpg") }} " alt="A screenshot of the model selector, showing the various models you can choose from." loading="lazy" width="200"/>
+
+{% endblock %}
