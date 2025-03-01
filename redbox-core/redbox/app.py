@@ -1,6 +1,7 @@
+import os
 from logging import getLogger
 
-from langchain.chat_models import init_chat_model
+from langchain.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 
 from redbox.models.chain import RedboxState
@@ -20,18 +21,8 @@ class Redbox:
 
     def _get_runnable(self, state: RedboxState):
         settings = get_settings()
-        if state.chat_backend.provider == "google_vertexai":
-            llm = init_chat_model(
-                model=state.chat_backend.name,
-                model_provider=state.chat_backend.provider,
-                location="europe-west1",
-                # europe-west1 = Belgium
-            )
-        else:
-            llm = init_chat_model(
-                model=state.chat_backend.name,
-                model_provider=state.chat_backend.provider,
-            )
+
+        llm = ChatOpenAI(openai_api_base=os.environ["LITELLM_API_BASE"], model=state.chat_backend.name)
 
         input_state = state.model_dump()
         messages = (

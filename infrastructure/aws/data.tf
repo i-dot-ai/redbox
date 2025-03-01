@@ -9,6 +9,9 @@ locals {
     "ALLOW_SIGN_UPS": var.allow_sign_ups,
     "AZURE_OPENAI_MODEL" : var.azure_openai_model,
 
+    "LITELLM_API_BASE": var.litellm_api_base,
+    "OPENAI_API_KEY": var.openai_api_key,
+
     "LIT_SSR_URL": local.ssr_url,
 
     "OBJECT_STORE" : "s3",
