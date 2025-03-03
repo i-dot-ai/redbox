@@ -9,7 +9,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from openai import RateLimitError
-from uwotm8 import convert_american_to_british_spelling
 
 from redbox import Redbox
 from redbox_app.redbox_core import error_messages
@@ -19,7 +18,6 @@ from redbox_app.redbox_core.models import (
 )
 
 User = get_user_model()
-
 logger = logging.getLogger(__name__)
 logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
@@ -66,7 +64,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             message = await ChatMessage.objects.acreate(
                 chat=chat,
-                text=convert_american_to_british_spelling(state.content),
+                text=state.content,
                 role=ChatMessage.Role.ai,
                 delay=delay,
             )
@@ -88,4 +86,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps(message, default=str))
 
     async def handle_text(self, response: str) -> str:
-        await self.send_to_client("text", convert_american_to_british_spelling(response))
+        await self.send_to_client("text", response)
