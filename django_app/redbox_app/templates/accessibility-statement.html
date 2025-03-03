@@ -2,18 +2,11 @@
 
 {% set pageTitle = "Accessibility statement" %}
 
-{% if waffle_flag(request, "uktrade") %}
-  {% set departmental_owner = "Department for Business and Trade" %}
-  {% set zoom_level = "300%" %}
-  {% set review_date_last = "21st June 2024" %}
-  {% set compliance_status = 'This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
 
-{% else %}
-  {% set departmental_owner = "Cabinet Office" %}
-  {% set zoom_level = "400%" %}
-  {% set review_date_last = "12th August 2024" %}
-  {% set compliance_status = 'The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
-{% endif %}
+{% set departmental_owner = "Cabinet Office" %}
+{% set zoom_level = "400%" %}
+{% set review_date_last = "28th February 2025" %}
+{% set compliance_status = 'The website has been tested against the Web Content Accessibility Guidelines (WCAG) 2.2 AA standard. This website is fully compliant with the <a href="https://www.w3.org/TR/WCAG22/" class="govuk-link">Web Content Accessibility Guidelines version 2.2</a> AA standard.' %}
 
 {% block content %}
 
@@ -51,7 +44,7 @@
 
     <h2 class="govuk-heading-m">Preparation of this accessibility statement</h2>
     <p class="govuk-body">This statement was prepared on 27th February 2024. It was last reviewed on {{ review_date_last }}.</p>
-    <p class="govuk-body">This website was last tested on {{ review_date_last }} against the WCAG 2.2 AA standard. The test was carried out by the Incubator for Artificial Intelligence (i.AI) manually using the WCAG Evaluation Methodology tool.</p>
+    <p class="govuk-body">This website was last tested on {{ review_date_last }} against the WCAG 2.2 AA standard. The testing was carried out using a combination of a technical audit using automated tools and manual testing by a dedicated team of user testers using a range of adaptive technologies.</p>
 
   </div>
 </div>
