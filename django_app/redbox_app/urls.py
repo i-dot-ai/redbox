@@ -89,7 +89,13 @@ api_url_patterns = [
 ]
 
 urlpatterns = (
-    info_urlpatterns + other_urlpatterns + auth_urlpatterns + chat_urlpatterns + admin_urlpatterns + api_url_patterns + training_urlpatterns
+    info_urlpatterns
+    + other_urlpatterns
+    + auth_urlpatterns
+    + chat_urlpatterns
+    + admin_urlpatterns
+    + api_url_patterns
+    + training_urlpatterns
 )
 
 if settings.DEBUG:

@@ -3,7 +3,6 @@ Views for info pages like privacy notice, accessibility statement, etc.
 These shouldn't contain sensitive data and don't require login.
 """
 
-from django.conf import settings
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 

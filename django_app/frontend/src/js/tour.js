@@ -69,7 +69,37 @@ if (window.location.pathname.includes("/chats/") && window.sessionStorage.getIte
     
   }).start();
 
-  // Accessibility fix
-  document.querySelector(".introjs-skipbutton")?.setAttribute("aria-label", "Skip the interactive demo");
+
+  // *** Accessibility fix - add accessible label to the close button ***
+  document.querySelector(".introjs-skipbutton")?.setAttribute("aria-label", "Close the interactive demo");
+
+  
+  // *** Accessibility fix - keep focus within the modal ***
+
+  // first need to create a button at the end of the body
+  let endInteractiveElement = document.createElement("button");
+  endInteractiveElement.textContent = "End interactive demo";
+  endInteractiveElement.classList.add("govuk-visually-hidden");
+  endInteractiveElement.addEventListener("click", () => {
+    /** @type {HTMLAnchorElement | null} */(document.querySelector(".introjs-skipbutton"))?.click();
+  });
+
+  // then listen for when focus leaves the modal and bring it back in
+  document.body.appendChild(endInteractiveElement);
+  document.querySelector(".introjs-skipbutton")?.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (!document.querySelector(".introjs-tooltip")?.contains(document.activeElement)) {
+        /** @type {HTMLAnchorElement | null} */(document.querySelector(".introjs-nextbutton"))?.focus();
+      }
+    }, 100);
+  });
+  document.querySelector(".introjs-nextbutton")?.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (!document.querySelector(".introjs-tooltip")?.contains(document.activeElement)) {
+        /** @type {HTMLAnchorElement | null} */(document.querySelector(".introjs-skipbutton"))?.focus();
+      }
+    }, 100);
+  });
+    
 
 }
