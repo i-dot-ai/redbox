@@ -64,7 +64,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             message = await ChatMessage.objects.acreate(
                 chat=chat,
-                text=state.content,
+                text=state["messages"][-1].content,
                 role=ChatMessage.Role.ai,
                 delay=delay,
             )
