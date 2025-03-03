@@ -44,7 +44,6 @@ django-waffle = "^4.1.0"
 markitdown = "^0.0.1a3"
 elasticsearch = "^8.17.1"
 langchain-google-vertexai = "^2.0.13"
-uwotm8 = "^0.0.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
