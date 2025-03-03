@@ -46,13 +46,21 @@
                 classes="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-4 govuk-!-margin-top-4"
               ) }}
 
+            {% else %}
+
               {{ govukButton(
-                text="Interactive tour",
-                href="/chats/#tour",
-                classes="govuk-button govuk-!-margin-bottom-4 govuk-!-margin-left-4 govuk-!-margin-top-4"
+                text="Exit training",
+                href=url('homepage'),
+                classes="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 govuk-!-margin-left-4 govuk-!-margin-top-4"
               ) }}
 
             {% endif %}
+
+            {{ govukButton(
+              text="Take the tour",
+              classes="govuk-button govuk-!-margin-bottom-4 govuk-!-margin-left-4 govuk-!-margin-top-4 js-tour-button"
+            ) }}
+
           </nav>
         </div>
       </div>
@@ -64,4 +72,6 @@
     
     </div>
   </div>
+
+  <script src="{{ static('js/training.js') }}"></script>
 {% endblock %}
