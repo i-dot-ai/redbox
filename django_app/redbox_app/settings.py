@@ -404,3 +404,4 @@ if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
         f.write(credentials)
 
 METRICS_FILE_NAME = "metrics.csv"
+USER_FILE_NAME = "users.csv"

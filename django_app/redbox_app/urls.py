@@ -80,6 +80,7 @@ other_urlpatterns = [
     path("security", views.SecurityTxtRedirectView.as_view(), name="security"),
     path("sitemap", views.misc_views.sitemap_view, name="sitemap"),
     path("download-metrics/", views.download_metrics, name="download-metrics"),
+    path("download-metrics/<str:file_name>", views.download_metrics, name="download-named-metrics"),
 ]
 
 

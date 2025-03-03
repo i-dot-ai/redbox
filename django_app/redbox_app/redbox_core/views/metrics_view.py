@@ -13,11 +13,11 @@ s3_client = env.s3_client()
 
 
 @login_required
-def download_metrics(_request):
+def download_metrics(_request, file_name: str = settings.METRICS_FILE_NAME):
     try:
-        file_obj = s3_client.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=settings.METRICS_FILE_NAME)["Body"]
+        file_obj = s3_client.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file_name)["Body"]
         response = HttpResponse(file_obj.read())
-        response["Content-Disposition"] = f'attachment; filename="{settings.METRICS_FILE_NAME}"'
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         response["Content-Type"] = "text/csv"
     except ClientError as e:
         if (
