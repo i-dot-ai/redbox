@@ -250,3 +250,13 @@ variable "google_application_credentials_json" {
   default = null
   description = "google application credentials for vertex-ai"
 }
+
+variable "litellm_api_base" {
+  type = string
+  default = "url of litellm insatnce"
+}
+
+variable "openai_api_key" {
+  type = string
+  default = "openai api key"
+}
