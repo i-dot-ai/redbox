@@ -3,9 +3,10 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
 from pytz import utc
-from rest_framework.fields import CharField, DateField, FloatField, IntegerField
+from rest_framework.fields import CharField, DateField, DateTimeField, FloatField, IntegerField
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 from redbox.models import Settings
@@ -13,6 +14,7 @@ from redbox_app.redbox_core.models import ChatMessage
 
 env = Settings()
 s3_client = env.s3_client()
+User = get_user_model()
 
 
 def to_csv(writer, record):
@@ -40,17 +42,30 @@ class MetricSerializer(Serializer):
         return datetime.now(tz=utc).strftime("%Y-%m-%d")
 
 
+class UserSerializer(Serializer):
+    date_joined = DateTimeField()
+    last_login = DateTimeField()
+    business_unit = CharField()
+    grade = CharField()
+    ai_experience = CharField()
+    profession = CharField()
+    role = CharField()
+
+
+def serialize_data(serializer, file_name):
+    local_file_path = Path.home() / file_name
+    with Path.open(local_file_path, "w") as f:
+        if serializer.data:
+            to_csv(f, serializer.data[0])
+        for record in serializer.data:
+            to_csv(f, record.values())
+
+    s3_client.upload_file(local_file_path, settings.BUCKET_NAME, file_name)
+
+
 class Command(BaseCommand):
     help = """dump metrics as csv to s3"""
 
     def handle(self, *args, **kwargs):  # noqa: ARG002
-        serializer = MetricSerializer(ChatMessage.metrics().all(), many=True)
-        file_name = settings.METRICS_FILE_NAME
-        local_file_path = Path.home() / settings.METRICS_FILE_NAME
-        with Path.open(local_file_path, "w") as f:
-            if serializer.data:
-                to_csv(f, serializer.data[0])
-            for record in serializer.data:
-                to_csv(f, record.values())
-
-        s3_client.upload_file(local_file_path, settings.BUCKET_NAME, file_name)
+        serialize_data(MetricSerializer(ChatMessage.metrics().all(), many=True), settings.METRICS_FILE_NAME)
+        serialize_data(UserSerializer(User.objects.all(), many=True), settings.USER_FILE_NAME)
