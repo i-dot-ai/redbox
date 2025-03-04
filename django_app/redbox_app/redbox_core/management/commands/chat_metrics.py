@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
 from pytz import utc
-from rest_framework.fields import CharField, DateField, FloatField, IntegerField
+from rest_framework.fields import CharField, DateField, FloatField, IntegerField, DateTimeField
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 from redbox.models import Settings
@@ -43,7 +43,8 @@ class MetricSerializer(Serializer):
 
 
 class UserSerializer(Serializer):
-    created_at = DateField()
+    date_joined = DateTimeField()
+    last_login = DateTimeField()
     business_unit = CharField()
     grade = CharField()
     ai_experience = CharField()
