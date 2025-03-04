@@ -172,14 +172,23 @@ class ChatMessageAdmin(ExportMixin, admin.ModelAdmin):
 class FileInline(admin.StackedInline):
     model = models.File
     ordering = ("modified_at",)
+    fields = (
+        "status",
+        "original_file",
+        "ingest_error",
+        "chat",
+        "token_count",
+        "task",
+    )  # do not include 'text' as it contravenes our DPIA
+    readonly_fields = ("status", "original_file", "ingest_error", "chat", "token_count", "task")
     extra = 0
 
 
 class ChatMessageInline(admin.StackedInline):
     model = models.ChatMessage
     ordering = ("created_at",)
-    fields = ["id", "created_at", "text", "role", "rating", "delay"]
-    readonly_fields = ["id", "created_at", "text", "role", "rating", "delay"]
+    fields = ["id", "created_at", "role", "rating", "delay"]  # do not include 'text' as it contravenes our DPIA
+    readonly_fields = ["id", "created_at", "role", "rating", "delay"]
     extra = 0
 
 
@@ -219,6 +228,16 @@ class FileAdmin(ExportMixin, admin.ModelAdmin):
     date_hierarchy = "created_at"
     actions = ["reupload"]
     search_fields = ["chat__user__email", "file_name"]
+
+    fields = (
+        "status",
+        "original_file",
+        "ingest_error",
+        "chat",
+        "token_count",
+        "task",
+    )  # do not include 'text' as it contravenes our DPIA
+    readonly_fields = ("status", "original_file", "ingest_error", "chat", "token_count", "task")
 
 
 admin.site.register(models.DepartmentBusinessUnit, DepartmentBusinessUnitAdmin)
