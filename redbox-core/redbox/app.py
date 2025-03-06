@@ -1,71 +1,80 @@
+import os
 from logging import getLogger
 
+from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import SystemMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from litellm.types.utils import ModelResponse
+from pyexpat.errors import messages
 
 from redbox.models.chain import RedboxState
 from redbox.models.settings import get_settings
-
+from litellm import acompletion, completion
 
 async def _default_callback(*args, **kwargs):
     return None
 
 
 logger = getLogger(__name__)
+load_dotenv()
+
+def build_messages(state: RedboxState):
+    settings = get_settings()
+    input_state = state.model_dump()
+    messages = (
+        [SystemMessage(settings.system_prompt_template)]
+        + state.messages[:-1]
+        + PromptTemplate.from_template(settings.question_prompt_template, template_format="jinja2")
+        .invoke(input=input_state)
+        .to_messages()
+    )
+    return [m.model_dump() for m in messages]
 
 
 class Redbox:
     def __init__(self, debug: bool = False):
         self.debug = debug
 
-    def _get_runnable(self, state: RedboxState):
-        settings = get_settings()
-        if state.chat_backend.provider == "google_vertexai":
-            llm = init_chat_model(
-                model=state.chat_backend.name,
-                model_provider=state.chat_backend.provider,
-                location="europe-west1",
-                # europe-west1 = Belgium
-            )
-        else:
-            llm = init_chat_model(
-                model=state.chat_backend.name,
-                model_provider=state.chat_backend.provider,
-            )
-
-        input_state = state.model_dump()
-        messages = (
-            [settings.system_prompt_template]
-            + state.messages[:-1]
-            + PromptTemplate.from_template(settings.question_prompt_template, template_format="jinja2")
-            .invoke(input=input_state)
-            .to_messages()
-        )
-        return ChatPromptTemplate.from_messages(messages=messages) | llm
 
     def run_sync(self, state: RedboxState):
         """
         Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
         """
-        request_dict = state.model_dump()
-        return self._get_runnable(state).invoke(input=request_dict)
+        return completion(model=f"{state.chat_backend.provider}/{state.chat_backend.name}", messages=build_messages(state))
 
     async def run(
         self,
         state: RedboxState,
         response_tokens_callback=_default_callback,
-    ) -> RedboxState:
-        final_state = None
+    ) -> AIMessage:
         request_dict = state.model_dump()
         logger.info("Request: %s", {k: request_dict[k] for k in request_dict.keys() - {"ai_settings"}})
-        async for event in self._get_runnable(state).astream_events(
-            request_dict,
-            version="v2",
-        ):
-            kind = event["event"]
-            if kind == "on_chat_model_stream":
-                content = event["data"]["chunk"].content
-                await response_tokens_callback(content)
-            elif kind == "on_chain_end":
-                final_state = event["data"]["output"]
-        return final_state
+
+
+        if state.chat_backend.provider == "azure_openai":
+            provider = "azure"
+            kwargs = {"vertex_credentials": os.environ["google_application_credentials_json"]}
+        elif state.chat_backend.provider == "google_vertexai":
+            provider="vertex_ai"
+            kwargs = {"api_base": os.environ["AZURE_OPENAI_ENDPOINT"]}
+        elif state.chat_backend.provider == "bedrock":
+            provider = "bedrock"
+            kwargs = {}
+        else:
+            raise ValueError("unrecognized provider")
+
+        response = await acompletion(
+            model=f"{provider}/{state.chat_backend.name}",
+            messages=build_messages(state),
+            stream=True,
+            **kwargs
+        )
+        response_message = []
+        async for part in response:
+            for choice in part.choices:
+                if choice.delta.content:
+                    response_message.append(choice.delta.content)
+                    await response_tokens_callback(choice.delta.content)
+
+        return AIMessage("".join(response_message))
