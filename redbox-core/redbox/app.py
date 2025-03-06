@@ -56,7 +56,7 @@ class Redbox:
             kwargs = {"api_base": os.environ["AZURE_OPENAI_ENDPOINT"]}
         elif state.chat_backend.provider == "google_vertexai":
             provider = "vertex_ai"
-            kwargs = {"vertex_credentials": os.environ["google_application_credentials_json"]}
+            kwargs = {"vertex_credentials": os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]}
         elif state.chat_backend.provider == "bedrock":
             provider = "bedrock"
             kwargs = {}
