@@ -96,6 +96,20 @@
 
             {% endfor %}
 
+            {# Testing Tools #}
+            {% set message = {
+              "role": "ai",
+              "text": '<p>Redbox would like to use the <strong>Caddy</strong> tool.</p><div class="govuk-button-group"><button class="govuk-button">Continue</button><button class="govuk-button govuk-button--secondary">Do not use tool</button><a class="govuk-link" href="#settings">Tool settings</a></div>',
+            } %}
+            {{ message_box(message=message) }}
+
+            {% set message = {
+              "role": "ai",
+              "text": '<p>Redbox would like to use the <strong>[Tool Name]</strong> tool with the following settings:</p><div class="govuk-form-group"><label class="govuk-label">Parameter 1</label><input class="govuk-input" type="text" value="Automatically extracted from prompt"/></div><div class="govuk-form-group"><label class="govuk-label">Parameter 2</label><input class="govuk-input" type="text" value="The user can amend these before sending"/></div><div class="govuk-button-group"><button class="govuk-button">Continue</button><button class="govuk-button govuk-button--secondary">Do not use tool</button><a class="govuk-link" href="#settings">Tool settings</a></div>',
+            } %}
+            {{ message_box(message=message) }}
+
+
             {# CSR messages are inserted here #}
 
           </ol>

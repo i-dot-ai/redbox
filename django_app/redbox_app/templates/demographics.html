@@ -64,6 +64,44 @@
       </div>
       #}
 
+      {# Testing Tools #}
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+            <h2 class="govuk-fieldset__heading">
+              Allow Redbox to use the following tools:
+            </h2>
+          </legend>
+          <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="organisation" name="organisation" type="checkbox" value="hmrc">
+              <label class="govuk-label govuk-checkboxes__label" for="organisation">
+                Caddy
+              </label>
+            </div>
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="organisation-2" name="organisation" type="checkbox" value="employment-tribunal">
+              <label class="govuk-label govuk-checkboxes__label" for="organisation-2">
+                Parlex
+              </label>
+            </div>
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="organisation-3" name="organisation" type="checkbox" value="MOD">
+              <label class="govuk-label govuk-checkboxes__label" for="organisation-3">
+                Minute
+              </label>
+            </div>
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="organisation-4" name="organisation" type="checkbox" value="DfT">
+              <label class="govuk-label govuk-checkboxes__label" for="organisation-4">
+                Google Drive
+              </label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+
       <div class="govuk-button-group">
         {{ govukButton(text="Update") }}
         {# {{ govukButton(text="Skip", href=url('chats'), classes="govuk-button--secondary") }} #}

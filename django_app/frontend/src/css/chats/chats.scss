@@ -209,6 +209,31 @@ chat-message {
   color: $redbox-red;
 }
 
+
+/* Tools */
+.iai-chat-bubble__text .govuk-button-group {
+  margin-bottom: 0;
+  margin-top: 1.5rem;
+}
+.iai-chat-bubble__text .govuk-input {
+  font-size: 0.875rem;
+  height: auto;
+  max-width: 50%;
+  padding: 0.5rem;
+}
+.iai-chat-bubble__text .govuk-form-group + .govuk-form-group {
+  margin-top: -0.75rem;
+}
+.iai-chat-bubble__text .govuk-button-group .govuk-button {
+  font-size: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.25 0.75rem;
+}
+.iai-chat-bubble__text .govuk-button-group .govuk-link {
+  font-size: 0.875rem;
+}
+
+
 @import "./feedback.scss";
 
 @import "./canned-prompts.scss";
