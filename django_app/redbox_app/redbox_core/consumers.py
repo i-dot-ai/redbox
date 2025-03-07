@@ -23,7 +23,7 @@ logger.info("WEBSOCKET_SCHEME is: %s", settings.WEBSOCKET_SCHEME)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    redbox = Redbox(debug=settings.DEBUG)
+    redbox = Redbox()
 
     async def receive(self, text_data=None, _bytes_data=None):
         """Receive & respond to message from browser websocket."""

@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import ClassVar
 from uuid import UUID
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -86,7 +85,7 @@ class ChatMessageSerializer(Serializer):
 
 
 class ChatMessageView(APIView):
-    redbox = Redbox(debug=settings.DEBUG)
+    redbox = Redbox()
 
     def post(self, request, chat_id: UUID):
         serializer = ChatMessageSerializer(data=request.data)
