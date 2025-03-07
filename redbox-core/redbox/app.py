@@ -28,7 +28,7 @@ def build_messages(state: RedboxState):
         .to_messages()
     )
 
-    return [m.model_dump() for m in system_messages + state.messages]
+    return [m.model_dump() for m in  state.messages + system_messages]
 
 
 class Redbox:
