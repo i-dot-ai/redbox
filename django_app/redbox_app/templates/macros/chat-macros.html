@@ -14,6 +14,11 @@
 
     <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>
 
+    <p class="iai-chat-bubble__sustainability">
+      <span aria-hidden="true">🌱 </span>
+      <a href="#sustainabiliy">Generated using 5 grams CO2 equivalent</a>
+    </p>
+
   </div>
 
   {% if message.role == "ai" %}

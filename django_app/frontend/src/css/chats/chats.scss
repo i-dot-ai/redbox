@@ -177,6 +177,17 @@ chat-message {
   font-weight: bold;
 }
 
+.iai-chat-bubble__sustainability {
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-bottom: 0;
+}
+.iai-chat-bubble__sustainability a {
+  color: var(--iai-colour-text-primary);
+}
+
 .rb-chat-message-footer__text {
   color: #60697b;
   font-size: 0.75rem;
