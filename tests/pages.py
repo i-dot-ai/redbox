@@ -56,7 +56,7 @@ class BasePage(ABC):
     def check_a11y(self, exclude: Sequence[str] | None = None):
         context = {"exclude": exclude} if exclude else None
         expect(self.page.locator(".iai-footer__container")).to_be_visible()  # Ensure page is fully loaded
-        results = self.axe.run(self.page, context=context, options=self.AXE_OPTIONS)
+        results = self.axe.run_async(self.page, context=context, options=self.AXE_OPTIONS)
         if results.violations_count:
             error_message = f"accessibility violations from page {self}: {results.generate_report()} "
             raise PageError(error_message)

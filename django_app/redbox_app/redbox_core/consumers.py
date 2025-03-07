@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from openai import RateLimitError
 
-from redbox import run
+from redbox import run_async
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import (
     ChatMessage,
@@ -55,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = await sync_to_async(chat.to_langchain)()
 
         try:
-            state = await run(
+            state = await run_async(
                 state,
                 response_tokens_callback=self.handle_text,
             )

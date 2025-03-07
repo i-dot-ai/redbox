@@ -43,7 +43,7 @@ def run_streamlit():
                 ),
             )
             # Run an asynchronous function from the Redbox instance to get the AI's response
-            response: RedboxState = asyncio.run(st.session_state.redbox.run(state))
+            response: RedboxState = asyncio.run(st.session_state.redbox.run_async(state))
             llm_answer = response["text"]
             # route = response["route_name"] - to be added back in if / when routing is added
             # Display the AI's response in the chat under the "ai" role and append it to the chat history

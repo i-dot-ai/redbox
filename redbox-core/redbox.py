@@ -187,7 +187,7 @@ def run_sync(state: RedboxState):
     return state.get_llm().invoke(input=state.get_messages())
 
 
-async def run(
+async def run_async(
     state: RedboxState,
     response_tokens_callback=_default_callback,
 ) -> AIMessage:
@@ -196,8 +196,7 @@ async def run(
         state.get_messages(),
         version="v2",
     ):
-        kind = event["event"]
-        if kind == "on_chat_model_stream":
+        if event["event"] == "on_chat_model_stream":
             content = event["data"]["chunk"].content
             final_message += content
             await response_tokens_callback(content)

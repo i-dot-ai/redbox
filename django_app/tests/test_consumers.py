@@ -356,7 +356,7 @@ async def test_chat_consumer_redbox_state(
             "redbox.RedboxState.get_llm",
             new=lambda _: mocked_connect_with_several_files,
         ),
-        patch("redbox_app.redbox_core.consumers.run") as mock_run,
+        patch("redbox_app.redbox_core.consumers.run_async") as mock_run,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_files.user
