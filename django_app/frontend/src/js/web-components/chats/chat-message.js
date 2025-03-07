@@ -102,6 +102,21 @@ export class ChatMessage extends HTMLElement {
     });
     document.addEventListener("stop-streaming", stopStreaming);
 
+    // If time to first response is too long, show an error message and send event to Plausible
+    const MAX_TIME_TO_FIRST_RESPONSE = 15000;
+    let firstResponseTimer = window.setTimeout(() => {
+      stopStreaming();
+      let plausible = /** @type {any} */ (window).plausible;
+      if (typeof plausible !== "undefined") {
+        plausible("Timeout", { props: { llm: document.querySelector(".rb-model-selector__select")?.textContent?.trim().split(" ")[0].trim() } });
+      }
+      if (this.responseContainer) {
+        this.responseContainer.innerHTML = "There was a problem. Please try sending this message again.";
+      }
+      this.dataset.status = "error";
+      /** @type {import("./message-input").MessageInput} */ (document.querySelector("message-input")).undoReset();
+    }, MAX_TIME_TO_FIRST_RESPONSE);
+
     webSocket.onopen = (event) => {
       webSocket.send(
         JSON.stringify({
@@ -115,6 +130,7 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onerror = (event) => {
+      clearTimeout(firstResponseTimer);
       if (!this.responseContainer) {
         return;
       }
@@ -124,6 +140,7 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onclose = (event) => {
+      clearTimeout(firstResponseTimer);
       this.loadingMessage?.remove();
       if (responseComplete) {
         responseComplete.textContent = "Response complete";
@@ -136,6 +153,7 @@ export class ChatMessage extends HTMLElement {
     };
 
     webSocket.onmessage = (event) => {
+      clearTimeout(firstResponseTimer);
       let response;
       try {
         response = JSON.parse(event.data);

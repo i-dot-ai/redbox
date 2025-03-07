@@ -4,6 +4,7 @@ export class MessageInput extends HTMLElement {
   constructor() {
     super();
     this.textarea = this.querySelector("textarea");
+    this.previousPrompt = "";
   }
 
   connectedCallback() {
@@ -50,7 +51,19 @@ export class MessageInput extends HTMLElement {
     if (!this.textarea) {
       return;
     }
+    this.previousPrompt = this.textarea.value;
     this.textarea.value = "";
+    this.#adjustHeight();
+  };
+
+  /**
+   * Shows the previous user prompt, if something has gone wrong
+   */
+  undoReset = () => {
+    if (!this.textarea) {
+      return;
+    }
+    this.textarea.value = this.previousPrompt;
     this.#adjustHeight();
   };
 }
