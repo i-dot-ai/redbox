@@ -24,7 +24,7 @@ class Redbox:
         state: RedboxState,
         response_tokens_callback=_default_callback,
     ) -> AIMessage:
-        final_state = None
+        final_message = ""
         async for event in state.get_llm().astream_events(
             state.get_messages(),
             version="v2",
@@ -32,7 +32,6 @@ class Redbox:
             kind = event["event"]
             if kind == "on_chat_model_stream":
                 content = event["data"]["chunk"].content
+                final_message += content
                 await response_tokens_callback(content)
-            elif kind == "on_chain_end":
-                final_state = event["data"]["output"]
-        return final_state
+        return AIMessage(content=final_message)
