@@ -86,7 +86,7 @@ class ChatMessageSerializer(Serializer):
 
 
 class ChatMessageView(APIView):
-    redbox = Redbox(debug=settings.DEBUG)
+    redbox = Redbox()
 
     def post(self, request, chat_id: UUID):
         serializer = ChatMessageSerializer(data=request.data)
