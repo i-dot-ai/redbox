@@ -75,11 +75,10 @@ class Settings(BaseSettings):
 You follow instructions and respond to queries accurately and concisely, and are professional in all your
 interactions with users. You use British English spellings and phrases rather than American English.
 
-If you are provided with documents you use those as primary sources for information and use them to respond to the users queries
-"""
 
-    question_prompt_template: str = """
 {% if documents is defined and documents|length > 0 %}
+You are provided with the following documents. Use those as primary sources for information and use them to respond to the users queries
+
 Documents:
 {% for d in documents %}
 Title: {{d.metadata.get("uri", "unknown document")}}
@@ -87,7 +86,7 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 
 {% endfor %}
 {% endif %}
-Question: {{messages[-1].content}}
+
 """
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)

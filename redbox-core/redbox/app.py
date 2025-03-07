@@ -2,7 +2,7 @@ import os
 from logging import getLogger
 
 from dotenv import load_dotenv
-from langchain_core.messages import SystemMessage, AIMessage
+from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
 
 from redbox.models.chain import RedboxState
@@ -21,14 +21,14 @@ load_dotenv()
 def build_messages(state: RedboxState):
     settings = get_settings()
     input_state = state.model_dump()
-    messages = (
-        [SystemMessage(settings.system_prompt_template)]
-        + state.messages[:-1]
-        + PromptTemplate.from_template(settings.question_prompt_template, template_format="jinja2")
+
+    system_messages = (
+        PromptTemplate.from_template(settings.system_prompt_template, template_format="jinja2")
         .invoke(input=input_state)
         .to_messages()
     )
-    return [m.model_dump() for m in messages]
+
+    return [m.model_dump() for m in system_messages + state.messages]
 
 
 class Redbox:
