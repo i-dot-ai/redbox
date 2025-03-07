@@ -59,7 +59,7 @@ class Redbox:
             kwargs = {"vertex_credentials": os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]}
         elif state.chat_backend.provider == "bedrock":
             provider = "bedrock"
-            kwargs = {}
+            kwargs = {"modify_params": True}
         else:
             raise ValueError("unrecognized provider")
 
