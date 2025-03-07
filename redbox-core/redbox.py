@@ -1,6 +1,17 @@
+import tiktoken
 import logging
 import os
+from logging import getLogger
 from functools import cache, lru_cache
+
+
+from langchain_core.messages import AIMessage
+from langchain.chat_models import init_chat_model
+from langchain_core.documents import Document
+from langchain_core.messages import AnyMessage, BaseMessage
+from langchain_core.prompts import PromptTemplate
+from pydantic import Field
+
 
 import boto3
 from elasticsearch import Elasticsearch, ConnectionError
@@ -49,13 +60,6 @@ class Settings(BaseSettings):
 
     elastic: ElasticCloudSettings | ElasticLocalSettings | None = None
     elastic_root_index: str = "redbox-data"
-
-    kibana_system_password: str = "redboxpass"
-    metricbeat_internal_password: str = "redboxpass"
-    filebeat_internal_password: str = "redboxpass"
-    heartbeat_internal_password: str = "redboxpass"
-    monitoring_internal_password: str = "redboxpass"
-    beats_system_password: str = "redboxpass"
 
     minio_host: str = "minio"
     minio_port: int = 9000
@@ -137,19 +141,6 @@ Title: {{d.metadata.get("uri", "unknown document")}}
                 region_name=self.aws_region,
             )
 
-        if self.object_store == "moto":
-            from moto import mock_aws
-
-            mock = mock_aws()
-            mock.start()
-
-            return boto3.client(
-                "s3",
-                aws_access_key_id=self.aws_access_key,
-                aws_secret_access_key=self.aws_secret_key,
-                region_name=self.aws_region,
-            )
-
         msg = f"unknown object_store={self.object_store}"
         raise NotImplementedError(msg)
 
@@ -159,3 +150,70 @@ def get_settings() -> Settings:
     s = Settings()
     set_debug(s.dev_mode)
     return s
+
+
+@cache
+def get_tokeniser() -> tiktoken.Encoding:
+    return tiktoken.get_encoding("cl100k_base")
+
+
+class RedboxState(BaseModel):
+    documents: list[Document] = Field(description="List of files to process", default_factory=list)
+    messages: list[AnyMessage] = Field(description="All previous messages in chat", default_factory=list)
+    chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
+
+    def get_llm(self):
+        if self.chat_backend.provider == "google_vertexai":
+            return init_chat_model(
+                model=self.chat_backend.name,
+                model_provider=self.chat_backend.provider,
+                location="europe-west1",
+                # europe-west1 = Belgium
+            )
+        return init_chat_model(
+            model=self.chat_backend.name,
+            model_provider=self.chat_backend.provider,
+        )
+
+    def get_messages(self) -> list[BaseMessage]:
+        settings = Settings()
+
+        input_state = self.model_dump()
+        system_messages = (
+            PromptTemplate.from_template(settings.system_prompt_template, template_format="jinja2")
+            .invoke(input=input_state)
+            .to_messages()
+        )
+        return system_messages + self.messages
+
+
+async def _default_callback(*args, **kwargs):
+    return None
+
+
+logger = getLogger(__name__)
+
+
+class Redbox:
+    def run_sync(self, state: RedboxState):
+        """
+        Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
+        """
+        return state.get_llm().invoke(input=state.get_messages())
+
+    async def run(
+        self,
+        state: RedboxState,
+        response_tokens_callback=_default_callback,
+    ) -> AIMessage:
+        final_message = ""
+        async for event in state.get_llm().astream_events(
+            state.get_messages(),
+            version="v2",
+        ):
+            kind = event["event"]
+            if kind == "on_chat_model_stream":
+                content = event["data"]["chunk"].content
+                final_message += content
+                await response_tokens_callback(content)
+        return AIMessage(content=final_message)
