@@ -1,26 +1,15 @@
-import tiktoken
-import logging
-import os
-from logging import getLogger
 from functools import cache, lru_cache
 
-
-from langchain_core.messages import AIMessage
-from langchain.chat_models import init_chat_model
-from langchain_core.documents import Document
-from langchain_core.messages import AnyMessage, BaseMessage
-from langchain_core.prompts import PromptTemplate
-from pydantic import Field
-
-
 import boto3
-from elasticsearch import Elasticsearch, ConnectionError
-from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import tiktoken
+from elasticsearch import ConnectionError, Elasticsearch
+from langchain.chat_models import init_chat_model
 from langchain.globals import set_debug
-
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
-logger = logging.getLogger()
+from langchain_core.documents import Document
+from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
+from langchain_core.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ElasticLocalSettings(BaseModel):
@@ -191,29 +180,25 @@ async def _default_callback(*args, **kwargs):
     return None
 
 
-logger = getLogger(__name__)
+def run_sync(state: RedboxState):
+    """
+    Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
+    """
+    return state.get_llm().invoke(input=state.get_messages())
 
 
-class Redbox:
-    def run_sync(self, state: RedboxState):
-        """
-        Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
-        """
-        return state.get_llm().invoke(input=state.get_messages())
-
-    async def run(
-        self,
-        state: RedboxState,
-        response_tokens_callback=_default_callback,
-    ) -> AIMessage:
-        final_message = ""
-        async for event in state.get_llm().astream_events(
-            state.get_messages(),
-            version="v2",
-        ):
-            kind = event["event"]
-            if kind == "on_chat_model_stream":
-                content = event["data"]["chunk"].content
-                final_message += content
-                await response_tokens_callback(content)
-        return AIMessage(content=final_message)
+async def run(
+    state: RedboxState,
+    response_tokens_callback=_default_callback,
+) -> AIMessage:
+    final_message = ""
+    async for event in state.get_llm().astream_events(
+        state.get_messages(),
+        version="v2",
+    ):
+        kind = event["event"]
+        if kind == "on_chat_model_stream":
+            content = event["data"]["chunk"].content
+            final_message += content
+            await response_tokens_callback(content)
+    return AIMessage(content=final_message)

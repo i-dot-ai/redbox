@@ -1,10 +1,11 @@
 # Set up
-import streamlit as st
-from redbox.app import Redbox
-from redbox.models.chain import RedboxQuery, RedboxState, AISettings
-from redbox.models.settings import get_settings
-from dotenv import load_dotenv
 import asyncio
+
+import streamlit as st
+from dotenv import load_dotenv
+from redbox.app import Redbox
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState
+from redbox.models.settings import get_settings
 
 # Load Redbox environment variables
 load_dotenv("../.env")

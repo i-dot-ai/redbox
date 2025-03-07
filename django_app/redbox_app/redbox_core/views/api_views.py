@@ -14,7 +14,7 @@ from rest_framework.serializers import ModelSerializer, Serializer
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from redbox import Redbox
+from redbox import run_sync
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.models import Chat, ChatMessage, File, get_chat_session
 from redbox_app.redbox_core.utils import sanitize_json
@@ -85,8 +85,6 @@ class ChatMessageSerializer(Serializer):
 
 
 class ChatMessageView(APIView):
-    redbox = Redbox()
-
     def post(self, request, chat_id: UUID):
         serializer = ChatMessageSerializer(data=request.data)
         if not serializer.is_valid():
@@ -100,7 +98,7 @@ class ChatMessageView(APIView):
         state = chat.to_langchain()
 
         try:
-            state = self.redbox.run_sync(state)
+            state = run_sync(state)
 
             message = ChatMessage.objects.create(
                 chat=chat,
