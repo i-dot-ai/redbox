@@ -9,7 +9,7 @@ from pytz import utc
 from rest_framework.fields import CharField, DateField, DateTimeField, FloatField, IntegerField
 from rest_framework.serializers import Serializer, SerializerMethodField
 
-from redbox.models import Settings
+from redbox import Settings
 from redbox_app.redbox_core.models import ChatMessage
 
 env = Settings()

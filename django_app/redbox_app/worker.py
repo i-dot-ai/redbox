@@ -3,7 +3,7 @@ from uuid import UUID
 
 from markitdown import MarkItDown, UnsupportedFormatException
 
-from redbox.chains.components import get_tokeniser
+from redbox import get_tokeniser
 from redbox_app.redbox_core.utils import sanitise_string
 
 md = MarkItDown()

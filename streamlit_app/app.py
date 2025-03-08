@@ -1,10 +1,11 @@
 # Set up
-import streamlit as st
-from redbox.app import Redbox
-from redbox.models.chain import RedboxQuery, RedboxState, AISettings
-from redbox.models.settings import get_settings
-from dotenv import load_dotenv
 import asyncio
+
+import streamlit as st
+from dotenv import load_dotenv
+from redbox.app import Redbox
+from redbox.models.chain import AISettings, RedboxQuery, RedboxState
+from redbox.models.settings import get_settings
 
 # Load Redbox environment variables
 load_dotenv("../.env")
@@ -42,7 +43,7 @@ def run_streamlit():
                 ),
             )
             # Run an asynchronous function from the Redbox instance to get the AI's response
-            response: RedboxState = asyncio.run(st.session_state.redbox.run(state))
+            response: RedboxState = asyncio.run(st.session_state.redbox.run_async(state))
             llm_answer = response["text"]
             # route = response["route_name"] - to be added back in if / when routing is added
             # Display the AI's response in the chat under the "ai" role and append it to the chat history
