@@ -4,7 +4,6 @@ import boto3
 import tiktoken
 from elasticsearch import ConnectionError, Elasticsearch
 from langchain.chat_models import init_chat_model
-from langchain.globals import set_debug
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
@@ -135,13 +134,6 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 
 
 @cache
-def get_settings() -> Settings:
-    s = Settings()
-    set_debug(s.dev_mode)
-    return s
-
-
-@cache
 def get_tokeniser() -> tiktoken.Encoding:
     return tiktoken.get_encoding("cl100k_base")
 
@@ -180,7 +172,7 @@ async def _default_callback(*args, **kwargs):
     return None
 
 
-def run_sync(state: RedboxState):
+def run_sync(state: RedboxState) -> BaseMessage:
     """
     Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
     """
