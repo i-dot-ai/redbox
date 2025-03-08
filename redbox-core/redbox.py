@@ -11,20 +11,6 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ElasticLocalSettings(BaseModel):
-    """settings required for a local/ec2 instance of elastic"""
-
-    model_config = SettingsConfigDict(frozen=True)
-
-    host: str = "elasticsearch"
-    port: int = 9200
-    scheme: str = "http"
-    user: str = "elastic"
-    version: str = "8.11.0"
-    password: str = "redboxpass"
-    subscription_level: str = "basic"
-
-
 class ElasticCloudSettings(BaseModel):
     """settings required for elastic-cloud"""
 
@@ -46,8 +32,8 @@ class ChatLLMBackend(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    elastic: ElasticCloudSettings | ElasticLocalSettings | None = None
-    elastic_root_index: str = "redbox-data"
+    elastic: ElasticCloudSettings | None = None
+    elastic_chat_message_index: str = "redbox-data-chat-mesage-log"
 
     minio_host: str = "minio"
     minio_port: int = 9000
@@ -58,9 +44,6 @@ class Settings(BaseSettings):
     bucket_name: str = "redbox-storage-dev"
 
     object_store: str = "minio"
-
-    dev_mode: bool = False
-    superuser_email: str | None = None
 
     system_prompt_template: str = """You are Redbox, an AI assistant to civil servants in the United Kingdom.
 
@@ -80,33 +63,16 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
 
-    @property
-    def elastic_chat_mesage_index(self):
-        return self.elastic_root_index + "-chat-mesage-log"
-
     @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch:
+    def elasticsearch_client(self) -> Elasticsearch | None:
         if self.elastic is None:
             return None
 
-        if isinstance(self.elastic, ElasticLocalSettings):
-            client = Elasticsearch(
-                hosts=[
-                    {
-                        "host": self.elastic.host,
-                        "port": self.elastic.port,
-                        "scheme": self.elastic.scheme,
-                    }
-                ],
-                basic_auth=(self.elastic.user, self.elastic.password),
-            )
-
-        else:
-            client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
 
         try:
-            if not client.indices.exists(index=self.elastic_chat_mesage_index):
-                client.indices.create(index=self.elastic_chat_mesage_index)
+            if not client.indices.exists(index=self.elastic_chat_message_index):
+                client.indices.create(index=self.elastic_chat_message_index)
         except ConnectionError:
             pass
 
