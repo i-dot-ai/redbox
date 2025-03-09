@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, BaseMessage
 
 from redbox.models.chain import RedboxState
 
@@ -13,7 +13,7 @@ logger = getLogger(__name__)
 
 
 class Redbox:
-    def run_sync(self, state: RedboxState):
+    def run_sync(self, state: RedboxState) -> BaseMessage:
         """
         Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
         """
