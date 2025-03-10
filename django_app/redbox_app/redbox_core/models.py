@@ -654,7 +654,9 @@ class ChatMessage(UUIDPrimaryKeyBase):
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
             "n_selected_files": n_selected_files,
             "delay_seconds": self.delay,
-            "time_to_first_token_seconds": self.time_to_first_token.total_seconds(),
+            "time_to_first_token_seconds": self.time_to_first_token.total_seconds()
+            if self.time_to_first_token
+            else None,
         }
         if es_client := env.elasticsearch_client():
             try:
