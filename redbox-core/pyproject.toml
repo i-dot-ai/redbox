@@ -19,6 +19,7 @@ langchain_openai = ">0.1.21"
 tiktoken = "^0.7.0"
 pydantic-settings = "^2.3.4"
 langchain-aws = "^0.2.3"
+litellm = "^1.63.3"
 
 
 [tool.poetry.group.dev.dependencies]
