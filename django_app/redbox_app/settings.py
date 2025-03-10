@@ -181,7 +181,6 @@ CSP_DEFAULT_SRC = (
 CSP_SCRIPT_SRC = (
     "'self'",
     "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
-    "'sha256-TnW3b3osC+i1wd8tjlnl6QJOeYc4oc7edkmhziTLEfk='", # Mermaid
     "plausible.io",
     "eu.i.posthog.com",
     "eu-assets.i.posthog.com",

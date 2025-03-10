@@ -277,6 +277,17 @@ message-input:has(textarea:placeholder-shown) label {
   padding-left: 1rem;
 }
 
+
+/* Mermaid charts */
+.iai-chat-bubble__text code.mermaid {
+  background-color: transparent;
+}
+.mermaid .label-container {
+  fill: #f5ebeb !important;
+  stroke: $redbox-red !important;
+}
+
+
 @import "./chat-input.scss";
 
 @import "./documents.scss";
