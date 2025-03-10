@@ -653,11 +653,14 @@ class ChatMessage(UUIDPrimaryKeyBase):
             "delay_seconds": self.delay,
         }
         if es_client := env.elasticsearch_client():
-            es_client.create(
-                index=env.elastic_chat_message_index,
-                id=uuid.uuid4(),
-                document=elastic_log_msg,
-            )
+            try:
+                es_client.create(
+                    index=env.elastic_chat_mesage_index,
+                    id=uuid.uuid4(),
+                    document=elastic_log_msg,
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.warning("failed to log metric %s", e)
 
     @classmethod
     def metrics(cls):

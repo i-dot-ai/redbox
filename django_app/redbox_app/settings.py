@@ -382,7 +382,6 @@ Q_CLUSTER = {
     "max_attempts": env.int("Q_MAX_ATTEMPTS", 1),
     "catch_up": False,
     "orm": "default",
-    "workers": 1,
 }
 
 GOOGLE_ANALYTICS_TAG = env.str("GOOGLE_ANALYTICS_TAG", " ")
