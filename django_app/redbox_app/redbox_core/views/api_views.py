@@ -98,12 +98,13 @@ class ChatMessageView(APIView):
         state = chat.to_langchain()
 
         try:
-            state = run_sync(state)
+            state, time_to_first_token = run_sync(state)
 
             message = ChatMessage.objects.create(
                 chat=chat,
                 text=state.content,
                 role=ChatMessage.Role.ai,
+                time_to_first_token=time_to_first_token,
             )
 
             return Response(

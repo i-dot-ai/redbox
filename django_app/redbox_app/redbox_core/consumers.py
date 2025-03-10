@@ -55,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         state = await sync_to_async(chat.to_langchain)()
 
         try:
-            state = await run_async(
+            state, time_to_first_token = await run_async(
                 state,
                 response_tokens_callback=self.handle_text,
             )
@@ -65,6 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 text=state.content,
                 role=ChatMessage.Role.ai,
                 delay=delay,
+                time_to_first_token=time_to_first_token,
             )
 
             await self.send_to_client("end", {"message_id": message.id, "title": chat.name, "session_id": chat.id})
