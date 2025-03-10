@@ -20,9 +20,8 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 from pytz import utc
 
-import redbox.models.chain
-from redbox.chains.components import get_tokeniser
-from redbox.models.settings import get_settings
+import redbox
+from redbox import RedboxState, get_tokeniser
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.utils import get_date_group, sanitise_string
 from redbox_app.worker import ingest
@@ -30,7 +29,7 @@ from redbox_app.worker import ingest
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-env = get_settings()
+env = redbox.Settings()
 tokeniser = get_tokeniser()
 
 
@@ -413,15 +412,15 @@ class Chat(UUIDPrimaryKeyBase):
     def date_group(self):
         return get_date_group(self.newest_message_date)
 
-    def to_langchain(self) -> redbox.models.chain.RedboxState:
-        chat_backend = redbox.models.chain.ChatLLMBackend(
+    def to_langchain(self) -> RedboxState:
+        chat_backend = redbox.ChatLLMBackend(
             name=self.chat_backend.name,
             provider=self.chat_backend.provider,
             description=self.chat_backend.description,
             context_window_size=self.chat_backend.context_window_size,
         )
 
-        return redbox.models.chain.RedboxState(
+        return RedboxState(
             documents=[
                 Document(str(file.text), metadata={"uri": file.original_file.name})
                 for file in self.file_set.order_by("created_at")

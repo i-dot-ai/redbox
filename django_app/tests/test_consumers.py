@@ -18,9 +18,7 @@ from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
 
-from redbox.models.chain import (
-    RedboxState,
-)
+from redbox import RedboxState
 from redbox_app.redbox_core import error_messages
 from redbox_app.redbox_core.consumers import ChatConsumer
 from redbox_app.redbox_core.models import (
@@ -41,7 +39,7 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
     # Given
 
     # When
-    with patch("redbox.models.RedboxState.get_llm", new=lambda _: mocked_connect):
+    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
@@ -76,7 +74,7 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
     # Given
 
     # When
-    with patch("redbox.models.RedboxState.get_llm", new=lambda _: mocked_connect):
+    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = staff_user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
@@ -108,7 +106,7 @@ async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: C
     # Given
 
     # When
-    with patch("redbox.models.RedboxState.get_llm", new=lambda _: mocked_connect):
+    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
@@ -130,7 +128,7 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
     # Given
 
     # When
-    with patch("redbox.models.RedboxState.get_llm", new=lambda _: mocked_connect):
+    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
@@ -178,7 +176,7 @@ async def test_chat_consumer_with_selected_files(
 
     # When
     with patch(
-        "redbox.models.RedboxState.get_llm",
+        "redbox.RedboxState.get_llm",
         new=lambda _: mocked_connect_with_several_files,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -231,7 +229,7 @@ async def test_chat_consumer_with_connection_error(chat: Chat, mocked_breaking_c
     # Given
 
     # When
-    with patch("redbox.models.RedboxState.get_llm", new=lambda _: mocked_breaking_connect):
+    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_breaking_connect):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat.user
         communicator.scope["url_route"] = {"kwargs": {"chat_id": chat.id}}
@@ -257,7 +255,7 @@ async def test_chat_consumer_with_explicit_unhandled_error(
 
     # When
     with patch(
-        "redbox.models.RedboxState.get_llm",
+        "redbox.RedboxState.get_llm",
         new=lambda _: mocked_connect_with_explicit_unhandled_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -290,7 +288,7 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
 
     # When
     with patch(
-        "redbox.models.RedboxState.get_llm",
+        "redbox.RedboxState.get_llm",
         new=lambda _: mocked_connect_with_rate_limited_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -324,7 +322,7 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
 
     # When
     with patch(
-        "redbox.models.RedboxState.get_llm",
+        "redbox.RedboxState.get_llm",
         new=lambda _: mocked_connect_with_explicit_no_document_selected_error,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
@@ -355,10 +353,10 @@ async def test_chat_consumer_redbox_state(
     # When
     with (
         patch(
-            "redbox.models.RedboxState.get_llm",
+            "redbox.RedboxState.get_llm",
             new=lambda _: mocked_connect_with_several_files,
         ),
-        patch("redbox_app.redbox_core.consumers.ChatConsumer.redbox.run") as mock_run,
+        patch("redbox_app.redbox_core.consumers.run_async") as mock_run,
     ):
         communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chat/")
         communicator.scope["user"] = chat_with_files.user
