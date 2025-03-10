@@ -32,7 +32,7 @@ def test_post_pass(chat: Chat, mocked_connect, client):
     client.force_login(chat.user)
 
     # When
-    with patch("redbox.RedboxState.get_llm", new=lambda _: mocked_connect):
+    with patch("redbox.ChatLLMBackend.get_llm", new=lambda _: mocked_connect):
         message = "write me poem"
         response = client.post(url, {"message": "write me poem"})
         assert response.status_code == 200

@@ -29,6 +29,21 @@ class ChatLLMBackend(BaseModel):
     context_window_size: int = 128_000
     model_config = {"frozen": True}
 
+    def get_llm(self) -> tuple[str, dict]:
+        if self.provider == "azure_openai":
+            provider = f"azure/{self.name}"
+            kwargs = {"api_base": os.environ["AZURE_OPENAI_ENDPOINT"]}
+            return provider, kwargs
+        if self.provider == "google_vertexai":
+            provider = f"vertex_ai/{self.name}"
+            kwargs = {"vertex_credentials": os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]}
+            return provider, kwargs
+        if self.provider == "bedrock":
+            provider = f"bedrock/{self.name}"
+            kwargs = {"modify_params": True}
+            return provider, kwargs
+        raise ValueError("unrecognized provider")
+
 
 class Settings(BaseSettings):
     """Settings for the redbox application."""
@@ -105,25 +120,21 @@ def get_tokeniser() -> tiktoken.Encoding:
     return tiktoken.get_encoding("cl100k_base")
 
 
+def message_to_dict(msg: BaseMessage):
+    if msg.type == "ai":
+        return {"content": msg.content, "role": "assistant"}
+    if msg.type == "human":
+        return {"content": msg.content, "role": "user"}
+    if msg.type == "system":
+        return {"content": msg.content, "role": "system"}
+
+    raise ValueError("msg type not %s recognised", msg.type)
+
+
 class RedboxState(BaseModel):
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
     messages: list[AnyMessage] = Field(description="All previous messages in chat", default_factory=list)
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
-
-    def get_llm(self) -> tuple[str, dict]:
-        if self.provider == "azure_openai":
-            provider = f"azure/{self.name}"
-            kwargs = {"api_base": os.environ["AZURE_OPENAI_ENDPOINT"]}
-            return provider, kwargs
-        if self.provider == "google_vertexai":
-            provider = f"vertex_ai/{self.name}"
-            kwargs = {"vertex_credentials": os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]}
-            return provider, kwargs
-        if self.provider == "bedrock":
-            provider = f"bedrock/{self.name}"
-            kwargs = {"modify_params": True}
-            return provider, kwargs
-        raise ValueError("unrecognized provider")
 
     def get_messages(self) -> list[dict]:
         settings = Settings()
@@ -134,7 +145,8 @@ class RedboxState(BaseModel):
             .invoke(input=input_state)
             .to_messages()
         )
-        return [msg.model_dump() for msg in self.messages + system_messages]
+
+        return [message_to_dict(msg) for msg in self.messages + system_messages]
 
 
 async def _default_callback(*args, **kwargs):
@@ -145,7 +157,7 @@ def run_sync(state: RedboxState) -> BaseMessage:
     """
     Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
     """
-    model, kwargs = state.get_llm()
+    model, kwargs = state.chat_backend.get_llm()
     messages = state.get_messages()
     response = completion(model=model, messages=messages, stream=False, **kwargs)
     return response.choices[-1].message
@@ -155,7 +167,7 @@ async def run_async(
     state: RedboxState,
     response_tokens_callback=_default_callback,
 ) -> AIMessage:
-    model, kwargs = state.get_llm()
+    model, kwargs = state.chat_backend.get_llm()
     messages = state.get_messages()
     final_message = ""
     response = await acompletion(model=model, messages=messages, stream=True, **kwargs)
