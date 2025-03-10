@@ -23,9 +23,7 @@ class CannedGraphLLM(BaseChatModel):
 
 @pytest.fixture()
 def mocked_connect():
-    responses = [{"content": "no", "type": "ai"}]
-
-    return CannedGraphLLM(responses=responses)
+    return "azure/gpt-4o", {"mock_response": "no"}
 
 
 def test_post_pass(chat: Chat, mocked_connect, client):

@@ -148,7 +148,7 @@ def run_sync(state: RedboxState) -> BaseMessage:
     model, kwargs = state.get_llm()
     messages = state.get_messages()
     response = completion(model=model, messages=messages, stream=False, **kwargs)
-    return response.messages[-1]
+    return response.choices[-1].message
 
 
 async def run_async(

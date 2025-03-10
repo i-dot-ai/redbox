@@ -12,8 +12,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Model
 from django.forms import model_to_dict
 from langchain_core.documents import Document
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from pydantic import BaseModel
 from websockets import WebSocketClientProtocol
 from websockets.legacy.client import Connect
@@ -33,9 +32,13 @@ logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 
+def batch_into_three(txt):
+    return [("text", txt[i : i + 3]) for i in range(0, len(txt), 3)]
+
+
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connect):
+async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect):
     # Given
 
     # When
@@ -47,19 +50,15 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
-        response_3 = await communicator.receive_json_from(timeout=5)
-        response_4 = await communicator.receive_json_from(timeout=5)
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["type"] == "text"
-        assert response_2["data"] == "Good afternoon, "
-        assert response_3["type"] == "text"
-        assert response_3["data"] == "Mr. Amor."
-        assert response_4["type"] == "end"
+        expected_responses = [("info", "Loading"), *batch_into_three("Good afternoon, Mr. Amor."), ("end", None)]
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
+
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
 
         # Close
         await communicator.disconnect()
@@ -70,7 +69,7 @@ async def test_chat_consumer_with_new_session(chat: Chat, mocked_connect: Connec
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_connect: Connect):
+async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_connect):
     # Given
 
     # When
@@ -82,19 +81,14 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal.", "output_text": "hello"})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
-        response_3 = await communicator.receive_json_from(timeout=5)
-        response_4 = await communicator.receive_json_from(timeout=5)
+        expected_responses = [("info", "Loading"), *batch_into_three("Good afternoon, Mr. Amor."), ("end", None)]
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["type"] == "text"
-        assert response_2["data"] == "Good afternoon, "
-        assert response_3["type"] == "text"
-        assert response_3["data"] == "Mr. Amor."
-        assert response_4["type"] == "end"
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
 
         # Close
         await communicator.disconnect()
@@ -102,7 +96,7 @@ async def test_chat_consumer_staff_user(staff_user: User, chat: Chat, mocked_con
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: Connect):
+async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect):
     # Given
 
     # When
@@ -124,7 +118,7 @@ async def test_chat_consumer_with_existing_session(chat: Chat, mocked_connect: C
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
-async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: Connect):
+async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect):
     # Given
 
     # When
@@ -136,19 +130,15 @@ async def test_chat_consumer_with_naughty_question(chat: Chat, mocked_connect: C
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal. \x00"})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
-        response_3 = await communicator.receive_json_from(timeout=5)
-        response_4 = await communicator.receive_json_from(timeout=5)
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["type"] == "text"
-        assert response_2["data"] == "Good afternoon, "
-        assert response_3["type"] == "text"
-        assert response_3["data"] == "Mr. Amor."
-        assert response_4["type"] == "end"
+        expected_responses = [("info", "Loading"), *batch_into_three("Good afternoon, Mr. Amor."), ("end", None)]
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
+
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
 
         # Close
         await communicator.disconnect()
@@ -265,17 +255,19 @@ async def test_chat_consumer_with_explicit_unhandled_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
-        response_3 = await communicator.receive_json_from(timeout=5)
+        expected_responses = [
+            ("info", "Loading"),
+            *batch_into_three("Good afternoon, " + error_messages.CORE_ERROR_MESSAGE),
+            ("end", None),
+        ]
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["type"] == "text"
-        assert response_2["data"] == "Good afternoon, "
-        assert response_3["type"] == "text"
-        assert response_3["data"] == error_messages.CORE_ERROR_MESSAGE
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
+
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
 
         # Close
         await communicator.disconnect()
@@ -298,17 +290,20 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
-        response_3 = await communicator.receive_json_from(timeout=5)
+        expected_responses = [
+            ("info", "Loading"),
+            *batch_into_three("Good afternoon, " + error_messages.RATE_LIMITED),
+            ("end", None),
+        ]
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["type"] == "text"
-        assert response_2["data"] == "Good afternoon, "
-        assert response_3["type"] == "text"
-        assert response_3["data"] == error_messages.RATE_LIMITED
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
+
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
+
         # Close
         await communicator.disconnect()
 
@@ -316,7 +311,7 @@ async def test_chat_consumer_with_rate_limited_error(chat: Chat, mocked_connect_
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio()
 async def test_chat_consumer_with_explicit_no_document_selected_error(
-    chat: Chat, mocked_connect_with_explicit_no_document_selected_error: Connect
+    chat: Chat, mocked_connect_with_explicit_no_document_selected_error
 ):
     # Given
 
@@ -332,13 +327,16 @@ async def test_chat_consumer_with_explicit_no_document_selected_error(
         assert connected
 
         await communicator.send_json_to({"message": "Hello Hal."})
-        response_1 = await communicator.receive_json_from(timeout=5)
-        response_2 = await communicator.receive_json_from(timeout=5)
+        expected_responses = [("info", "Loading"), *batch_into_three(error_messages.SELECT_DOCUMENT), ("end", None)]
 
-        # Then
-        assert response_1["type"] == "info"
-        assert response_1["data"] == "Loading"
-        assert response_2["data"] == error_messages.SELECT_DOCUMENT
+        for kind, content in expected_responses:
+            response = await communicator.receive_json_from(timeout=5)
+
+            # Then
+            assert response["type"] == kind
+            if kind == "text":
+                assert response["data"] == content
+
         # Close
         await communicator.disconnect()
 
@@ -405,52 +403,14 @@ class Token(BaseModel):
     content: str
 
 
-class CannedGraphLLM(BaseChatModel):
-    responses: list[dict]
-
-    def _generate(self, *_args, **_kwargs):
-        for _ in self.responses:
-            yield
-
-    def _llm_type(self):
-        return "canned"
-
-    async def astream_events(self, *_args, **_kwargs):
-        for response in self.responses:
-            yield response
+@pytest.fixture()
+def mocked_connect() -> tuple[str, dict]:
+    return "azure/gpt-4o", {"mock_response": "Good afternoon, Mr. Amor."}
 
 
 @pytest.fixture()
-def mocked_connect() -> Connect:
-    responses = [
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content="Good afternoon, ")},
-        },
-        {"event": "on_chat_model_stream", "data": {"chunk": Token(content="Mr. Amor.")}},
-        {
-            "event": "on_chain_end",
-            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
-
-
-@pytest.fixture()
-def mocked_connect_with_naughty_citation() -> CannedGraphLLM:
-    responses = [
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content="Good afternoon, Mr. Amor.")},
-        },
-        {
-            "event": "on_chain_end",
-            "data": {"output": AIMessageChunk(content="Good afternoon, Mr. Amor.")},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
+def mocked_connect_with_naughty_citation() -> tuple[str, dict]:
+    return "azure/gpt-4o", {"mock_response": "Good afternoon, Mr. Amor."}
 
 
 @pytest.fixture()
@@ -461,47 +421,18 @@ def mocked_breaking_connect() -> Connect:
 
 
 @pytest.fixture()
-def mocked_connect_with_explicit_unhandled_error() -> CannedGraphLLM:
-    responses = [
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content="Good afternoon, ")},
-        },
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content=error_messages.CORE_ERROR_MESSAGE)},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
+def mocked_connect_with_explicit_unhandled_error() -> tuple[str, dict]:
+    return "azure/gpt-4o", {"mock_response": "Good afternoon, " + error_messages.CORE_ERROR_MESSAGE}
 
 
 @pytest.fixture()
-def mocked_connect_with_rate_limited_error() -> CannedGraphLLM:
-    responses = [
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content="Good afternoon, ")},
-        },
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content=error_messages.RATE_LIMITED)},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
+def mocked_connect_with_rate_limited_error() -> tuple[str, dict]:
+    return "azure/gpt-4o", {"mock_response": "Good afternoon, " + error_messages.RATE_LIMITED}
 
 
 @pytest.fixture()
-def mocked_connect_with_explicit_no_document_selected_error() -> CannedGraphLLM:
-    responses = [
-        {
-            "event": "on_chat_model_stream",
-            "data": {"chunk": Token(content=error_messages.SELECT_DOCUMENT)},
-        },
-    ]
-
-    return CannedGraphLLM(responses=responses)
+def mocked_connect_with_explicit_no_document_selected_error() -> tuple[str, dict]:
+    return "azure/gpt-4o", {"mock_response": error_messages.SELECT_DOCUMENT}
 
 
 @pytest.fixture()
