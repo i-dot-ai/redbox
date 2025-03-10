@@ -187,7 +187,7 @@ CSP_SCRIPT_SRC = (
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
-CSP_TRUSTED_TYPES = ("dompurify", "lit-html", "default")
+CSP_TRUSTED_TYPES = ("dompurify", "dompurifyMermaid", "lit-html", "default")
 CSP_REPORT_TO = "csp-endpoint"
 CSP_FONT_SRC = (
     "'self'",

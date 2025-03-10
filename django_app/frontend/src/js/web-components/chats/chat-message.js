@@ -94,6 +94,7 @@ export class ChatMessage extends HTMLElement {
     const stopStreaming = () => {
       this.dataset.status = "stopped";
       webSocket.close();
+      window["runMermaid"]();
     };
     this.addEventListener("keydown", (evt) => {
       if (evt.key === "Escape" && this.dataset.status === "streaming") {
