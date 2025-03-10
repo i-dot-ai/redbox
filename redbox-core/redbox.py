@@ -1,7 +1,9 @@
 from functools import cache, lru_cache
 
 import boto3
+import datetime
 import tiktoken
+from _datetime import timedelta
 from elasticsearch import ConnectionError, Elasticsearch
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
@@ -138,24 +140,31 @@ async def _default_callback(*args, **kwargs):
     return None
 
 
-def run_sync(state: RedboxState) -> BaseMessage:
+def run_sync(state: RedboxState) -> tuple[BaseMessage, timedelta]:
     """
     Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
     """
-    return state.get_llm().invoke(input=state.get_messages())
+    start = datetime.datetime.now()
+    result = state.get_llm().invoke(input=state.get_messages())
+    end = datetime.datetime.now()
+    return result, end - start
 
 
 async def run_async(
     state: RedboxState,
     response_tokens_callback=_default_callback,
-) -> AIMessage:
+) -> tuple[AIMessage, timedelta]:
+    start = datetime.datetime.now()
+    end = None
     final_message = ""
     async for event in state.get_llm().astream_events(
         state.get_messages(),
         version="v2",
     ):
         if event["event"] == "on_chat_model_stream":
+            if end is None:
+                end = datetime.datetime.now()
             content = event["data"]["chunk"].content
             final_message += content
             await response_tokens_callback(content)
-    return AIMessage(content=final_message)
+    return AIMessage(content=final_message), end - start
