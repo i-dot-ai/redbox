@@ -9,7 +9,23 @@ mermaid.initialize({
 
 
 window["runMermaid"] = async () => {
-  
+
+  // Allow users to view the chart code
+  const mermaidCodes = document.querySelectorAll("code.mermaid");
+  mermaidCodes.forEach((mermaidCode) => {
+    if (mermaidCode.hasAttribute("data-processed")) {
+      return;
+    }
+    const clonedElement = /** @type {HTMLElement} */(mermaidCode.parentNode?.cloneNode(true));
+    clonedElement.querySelector(".mermaid")?.classList.remove("mermaid");
+    const detailsElement = document.createElement("details");
+    const summaryElement = document.createElement("summary");
+    summaryElement.textContent = "Mermaid code";
+    detailsElement.appendChild(summaryElement);
+    detailsElement.appendChild(clonedElement);
+    mermaidCode?.parentNode?.parentNode?.insertBefore(detailsElement, mermaidCode.parentNode.nextSibling);
+  });
+
   await window.mermaid.run();
   
   // Due to having to remove the foreignObject elements, the spacing will be out without these adjustments
