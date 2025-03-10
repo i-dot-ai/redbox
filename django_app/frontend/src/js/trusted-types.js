@@ -9,7 +9,7 @@ if (typeof window.trustedTypes !== "undefined") {
     createHTML: (to_escape) => {
 
       // We need to remove foreignObject elements (and therefore HTML elements contained within them) from the SVG
-      if (to_escape.includes('<svg aria-roledescription="flowchart-v2" role="graphics-document document"')) {
+      if (to_escape.includes('id="mermaid-')) {
         to_escape = to_escape.replace(/foreignObject/g, "g");
         to_escape = to_escape.replace(/div/g, "g");
         to_escape = to_escape.replace(/span/g, "g");
