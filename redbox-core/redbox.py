@@ -1,14 +1,15 @@
+import os
 from functools import cache, lru_cache
 
 import boto3
 import tiktoken
 from elasticsearch import ConnectionError, Elasticsearch
-from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from litellm import completion, acompletion
 
 
 class ElasticCloudSettings(BaseModel):
@@ -27,6 +28,21 @@ class ChatLLMBackend(BaseModel):
     description: str | None = None
     context_window_size: int = 128_000
     model_config = {"frozen": True}
+
+    def get_llm(self) -> tuple[str, dict]:
+        if self.provider == "azure_openai":
+            provider = f"azure/{self.name}"
+            kwargs = {"api_base": os.environ["AZURE_OPENAI_ENDPOINT"]}
+            return provider, kwargs
+        if self.provider == "google_vertexai":
+            provider = f"vertex_ai/{self.name}"
+            kwargs = {"vertex_credentials": os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]}
+            return provider, kwargs
+        if self.provider == "bedrock":
+            provider = f"bedrock/{self.name}"
+            kwargs = {"modify_params": True}
+            return provider, kwargs
+        raise ValueError("unrecognized provider")
 
 
 class Settings(BaseSettings):
@@ -104,25 +120,23 @@ def get_tokeniser() -> tiktoken.Encoding:
     return tiktoken.get_encoding("cl100k_base")
 
 
+def message_to_dict(msg: BaseMessage):
+    if msg.type == "ai":
+        return {"content": msg.content, "role": "assistant"}
+    if msg.type == "human":
+        return {"content": msg.content, "role": "user"}
+    if msg.type == "system":
+        return {"content": msg.content, "role": "system"}
+
+    raise ValueError("msg type not %s recognised", msg.type)
+
+
 class RedboxState(BaseModel):
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
     messages: list[AnyMessage] = Field(description="All previous messages in chat", default_factory=list)
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
 
-    def get_llm(self):
-        if self.chat_backend.provider == "google_vertexai":
-            return init_chat_model(
-                model=self.chat_backend.name,
-                model_provider=self.chat_backend.provider,
-                location="europe-west1",
-                # europe-west1 = Belgium
-            )
-        return init_chat_model(
-            model=self.chat_backend.name,
-            model_provider=self.chat_backend.provider,
-        )
-
-    def get_messages(self) -> list[BaseMessage]:
+    def get_messages(self) -> list[dict]:
         settings = Settings()
 
         input_state = self.model_dump()
@@ -131,7 +145,8 @@ class RedboxState(BaseModel):
             .invoke(input=input_state)
             .to_messages()
         )
-        return system_messages + self.messages
+
+        return [message_to_dict(msg) for msg in self.messages + system_messages]
 
 
 async def _default_callback(*args, **kwargs):
@@ -142,20 +157,23 @@ def run_sync(state: RedboxState) -> BaseMessage:
     """
     Run Redbox without streaming events. This simpler, synchronous execution enables use of the graph debug logging
     """
-    return state.get_llm().invoke(input=state.get_messages())
+    model, kwargs = state.chat_backend.get_llm()
+    messages = state.get_messages()
+    response = completion(model=model, messages=messages, stream=False, **kwargs)
+    return response.choices[-1].message
 
 
 async def run_async(
     state: RedboxState,
     response_tokens_callback=_default_callback,
 ) -> AIMessage:
+    model, kwargs = state.chat_backend.get_llm()
+    messages = state.get_messages()
     final_message = ""
-    async for event in state.get_llm().astream_events(
-        state.get_messages(),
-        version="v2",
-    ):
-        if event["event"] == "on_chat_model_stream":
-            content = event["data"]["chunk"].content
-            final_message += content
-            await response_tokens_callback(content)
+    response = await acompletion(model=model, messages=messages, stream=True, **kwargs)
+    async for event in response:
+        for choice in event.choices:
+            if choice.delta.content:
+                final_message += choice.delta.content
+                await response_tokens_callback(choice.delta.content)
     return AIMessage(content=final_message)
