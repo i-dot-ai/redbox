@@ -187,13 +187,13 @@ CSP_SCRIPT_SRC = (
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
-CSP_TRUSTED_TYPES = ("dompurify", "lit-html", "default")
+CSP_TRUSTED_TYPES = ("dompurify", "lit-html", "default", "'allow-duplicates'")
 CSP_REPORT_TO = "csp-endpoint"
 CSP_FONT_SRC = (
     "'self'",
     "s3.amazonaws.com",
 )
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'") # TO DO: Not happy about this change - look at workarounds (KE)
+CSP_STYLE_SRC = ("'self'")
 CSP_FRAME_ANCESTORS = ("'self'",)  # 'self' needed for printing chats
 
 

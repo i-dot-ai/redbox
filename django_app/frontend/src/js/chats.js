@@ -33,32 +33,3 @@ document.addEventListener("chat-response-end", (evt) => {
   // And add to chat history
   document.querySelector("chat-history").addChat(sessionId, sessionTitle);
 });
-
-// Mermaid Test - applying blocked styles directly in JavaScript
-/*
-window.setTimeout(() => {
-  let styledElements = document.querySelectorAll(".mermaid [style]");
-  styledElements.forEach((element) => {
-    const style = element.getAttribute("style");
-    //element.removeAttribute("style");
-    style.split(";").forEach((styleRule) => {
-      if (styleRule.trim() !== "") {
-        const [property, value] = styleRule.split(":");
-        //const camelCaseProperty = property
-        //  .trim()
-        //  .replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-        //element.style[camelCaseProperty] = value.trim();
-        try {
-          element.setAttribute(
-            property.trim(),
-            value.replace("!important", "").trim()
-          );
-        } catch (err) {
-          console.log(err);
-        }
-        console.log(element);
-      }
-    });
-  });
-}, 1000);
-*/
