@@ -592,6 +592,9 @@ class ChatMessage(UUIDPrimaryKeyBase):
     rating_chips = ArrayField(models.CharField(max_length=32), null=True, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True, help_text="number of tokens in the message")
     delay = models.FloatField(default=0, help_text="by how much was this message delayed in seconds")
+    time_to_first_token = models.DurationField(
+        null=True, blank=True, help_text="time take to for LLM to respond with first token"
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         return textwrap.shorten(self.text, width=20, placeholder="...")
@@ -651,6 +654,9 @@ class ChatMessage(UUIDPrimaryKeyBase):
             "chat_feedback_improved_work": self.chat.feedback_improved_work,
             "n_selected_files": n_selected_files,
             "delay_seconds": self.delay,
+            "time_to_first_token_seconds": self.time_to_first_token.total_seconds()
+            if self.time_to_first_token
+            else None,
         }
         if es_client := env.elasticsearch_client():
             try:
