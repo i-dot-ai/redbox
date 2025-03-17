@@ -57,6 +57,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             state, time_to_first_token = await run_async(
                 state,
+                mcp_url="http://localhost:8000/mcp/sse",
                 response_tokens_callback=self.handle_text,
             )
 

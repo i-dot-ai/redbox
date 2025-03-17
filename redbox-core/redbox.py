@@ -9,6 +9,11 @@ from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
+from langchain_mcp import MCPToolkit
+from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt.chat_agent_executor import AgentStatePydantic
+from mcp import ClientSession
+from mcp.client.sse import sse_client
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -124,7 +129,7 @@ class RedboxState(BaseModel):
             model_provider=self.chat_backend.provider,
         )
 
-    def get_messages(self) -> list[BaseMessage]:
+    def get_agent_state(self) -> AgentStatePydantic:
         settings = Settings()
 
         input_state = self.model_dump()
@@ -133,7 +138,7 @@ class RedboxState(BaseModel):
             .invoke(input=input_state)
             .to_messages()
         )
-        return system_messages + self.messages
+        return AgentStatePydantic(messages=system_messages + self.messages)
 
 
 async def _default_callback(*args, **kwargs):
@@ -152,19 +157,38 @@ def run_sync(state: RedboxState) -> tuple[BaseMessage, timedelta]:
 
 async def run_async(
     state: RedboxState,
+    mcp_url: str,
     response_tokens_callback=_default_callback,
 ) -> tuple[AIMessage, timedelta]:
     start = datetime.datetime.now()
     end = None
+
+    llm = state.get_llm()
+
+    agent_state = state.get_agent_state()
     final_message = ""
-    async for event in state.get_llm().astream_events(
-        state.get_messages(),
-        version="v2",
-    ):
-        if event["event"] == "on_chat_model_stream":
-            if end is None:
-                end = datetime.datetime.now()
-            content = event["data"]["chunk"].content
-            final_message += content
-            await response_tokens_callback(content)
-    return AIMessage(content=final_message), end - start
+
+    async with sse_client(mcp_url) as (read, write):
+        async with ClientSession(read, write) as session:
+            toolkit = MCPToolkit(session=session)
+            await toolkit.initialize()
+
+            tools = toolkit.get_tools()
+
+            graph = create_react_agent(
+                llm,
+                tools=tools,
+            )
+
+            async for event in graph.astream_events(
+                agent_state,
+                version="v2",
+            ):
+                if event["event"] == "on_chat_model_stream":
+                    if end is None:
+                        end = datetime.datetime.now()
+                    content = event["data"]["chunk"].content
+                    final_message += content
+                    await response_tokens_callback(content)
+
+        return AIMessage(content=final_message), end - start
