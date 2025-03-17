@@ -21,3 +21,26 @@ module "rds" {
   secret_tags         = { "platform:secret-purpose" = "general" }
   publicly_accessible = var.publicly_accessible
 }
+
+module "rds-aurora" {
+  #   source = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/rds"  # For testing local changes
+  source                 = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v3.4.0-rds"
+  db_name                = replace(var.project_name, "-", "_")
+  kms_secrets_arn        = data.terraform_remote_state.platform.outputs.kms_key_arn
+  name                   = local.name
+  public_subnet_ids_list = data.terraform_remote_state.vpc.outputs.public_subnets
+  securelist_ips = toset(var.ip_whitelist)
+  service_sg_ids = [
+    module.django-app.ecs_sg_id,
+    module.worker.ecs_sg_id
+  ]
+  vpc_id                 = data.terraform_remote_state.vpc.outputs.vpc_id
+  engine                 = "aurora-postgresql"
+  engine_version         = "16.4"  # Could try this with newest 17.4 version, not sure if 16 -> 17 migration will work
+  family                 = null
+  engine_mode            = "provisioned"
+  aurora_min_scaling     = 0.5
+  aurora_max_scaling     = 1
+  aurora_instance_count  = 1
+  deletion_protection    = var.env == "dev" ? false : true
+}
