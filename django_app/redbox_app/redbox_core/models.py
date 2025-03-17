@@ -661,7 +661,7 @@ class ChatMessage(UUIDPrimaryKeyBase):
         if es_client := env.elasticsearch_client():
             try:
                 es_client.create(
-                    index=env.elastic_chat_mesage_index,
+                    index=env.elastic_chat_message_index,
                     id=uuid.uuid4(),
                     document=elastic_log_msg,
                 )
