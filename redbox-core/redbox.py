@@ -23,10 +23,6 @@ class ChatLLMBackend(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    elastic_api_key: str | None = None
-    elastic_cloud_id: str | None = None
-    elastic_chat_message_index: str = "redbox-data-chat-mesage-log"
-
     minio_host: str = "minio"
     minio_port: int = 9000
     aws_access_key: str | None = None
