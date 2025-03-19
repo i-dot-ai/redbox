@@ -658,9 +658,9 @@ class ChatMessage(UUIDPrimaryKeyBase):
             if self.time_to_first_token
             else None,
         }
-        if es_client := env.elasticsearch_client():
+        if settings.ELASTIC_CLIENT:
             try:
-                es_client.create(
+                settings.ELASTIC_CLIENT.create(
                     index=env.elastic_chat_message_index,
                     id=uuid.uuid4(),
                     document=elastic_log_msg,
