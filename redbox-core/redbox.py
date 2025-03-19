@@ -1,17 +1,15 @@
-from functools import cache, lru_cache
+from functools import cache
 
 import boto3
 import datetime
 import tiktoken
 from _datetime import timedelta
-from elasticsearch import ConnectionError, Elasticsearch
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 
 class ChatLLMBackend(BaseModel):
@@ -56,21 +54,6 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 """
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
-
-    @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch | None:
-        if self.elastic_cloud_id is None:
-            return None
-
-        client = Elasticsearch(cloud_id=self.elastic_cloud_id, api_key=self.elastic_api_key)
-
-        try:
-            if not client.indices.exists(index=self.elastic_chat_message_index):
-                client.indices.create(index=self.elastic_chat_message_index)
-        except ConnectionError:
-            pass
-
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
         if self.object_store == "minio":

@@ -49,8 +49,8 @@ jobs:
         cp tests/.env.integration .env
         echo AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }} >> .env
         echo AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} >> .env
-        echo ELASTIC__API_KEY=${{ secrets.ELASTIC__API_KEY }} >> .env
-        echo ELASTIC__CLOUD_ID=${{ secrets.ELASTIC__CLOUD_ID }} >> .env
+        echo ELASTIC_API_KEY=${{ secrets.ELASTIC__API_KEY }} >> .env
+        echo ELASTIC_CLOUD_ID=${{ secrets.ELASTIC__CLOUD_ID }} >> .env
         docker compose up -d --wait minio db
         docker compose up -d --wait django-app worker
         docker ps
