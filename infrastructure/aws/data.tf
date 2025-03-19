@@ -27,8 +27,7 @@ locals {
     "SENTRY_ENVIRONMENT" : var.sentry_environment,
     "SENTRY_REPORT_TO_ENDPOINT" : var.sentry_report_to_endpoint,
 
-    "ELASTIC_ROOT_INDEX" : "redbox-data-${terraform.workspace}",
-    "ELASTIC_CHUNK_ALIAS" : "redbox-data-${terraform.workspace}-chunk-current",
+    "ELASTIC_CHAT_MESSAGE_INDEX" : "redbox-data-${terraform.workspace}-chat-mesage-log",
     "BUCKET_NAME" : aws_s3_bucket.user_data.bucket,
     "OBJECT_STORE" : "s3",
     "ENVIRONMENT" : upper(terraform.workspace),
@@ -42,8 +41,8 @@ locals {
   }
 
   django_app_secrets = {
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
+    "ELASTIC_API_KEY" : var.elastic_api_key,
+    "ELASTIC_CLOUD_ID" : var.cloud_id,
 
     "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
     "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
@@ -57,8 +56,6 @@ locals {
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
     "SLACK_NOTIFICATION_URL" : var.slack_url
-    "ELASTIC__API_KEY" : var.elastic_api_key,
-    "ELASTIC__CLOUD_ID" : var.cloud_id,
   }
 
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]

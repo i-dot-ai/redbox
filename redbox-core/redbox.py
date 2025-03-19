@@ -13,15 +13,6 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ElasticCloudSettings(BaseModel):
-    """settings required for elastic-cloud"""
-
-    model_config = SettingsConfigDict(frozen=True)
-
-    api_key: str
-    cloud_id: str
-    subscription_level: str = "basic"
-
 
 class ChatLLMBackend(BaseModel):
     name: str = "gpt-4o"
@@ -34,7 +25,8 @@ class ChatLLMBackend(BaseModel):
 class Settings(BaseSettings):
     """Settings for the redbox application."""
 
-    elastic: ElasticCloudSettings | None = None
+    elastic_api_key: str | None = None
+    elastic_cloud_id: str | None = None
     elastic_chat_message_index: str = "redbox-data-chat-mesage-log"
 
     minio_host: str = "minio"
@@ -67,10 +59,10 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 
     @lru_cache(1)
     def elasticsearch_client(self) -> Elasticsearch | None:
-        if self.elastic is None:
+        if self.elastic_cloud_id is None:
             return None
 
-        client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
+        client = Elasticsearch(cloud_id=self.elastic_cloud_id, api_key=self.elastic_api_key)
 
         try:
             if not client.indices.exists(index=self.elastic_chat_message_index):
