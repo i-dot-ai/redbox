@@ -53,7 +53,7 @@ class ChatController extends HTMLElement {
           <details>
             <summary>Model token limits</summary>
             <ul class="rb-token-sizes">
-              ${models.map((model) => `<li><span>${model.name}: </span><span>${model.max_tokens} tokens</li>`).join("")}
+              ${models.map((model) => `<li><span>${model.name}: </span><span>${model.max_tokens.toLocaleString('en-GB')} tokens</li>`).join("")}
             </ul>
           </details>
         `);

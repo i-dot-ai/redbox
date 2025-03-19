@@ -271,6 +271,7 @@ message-input:has(textarea:placeholder-shown) label {
   color: var(--iai-colour-secondary-teal);
   cursor: pointer;
   display: inline-block;
+  margin-top: 1rem;
   padding: 0.25rem 0.75rem;
 }
 .iai-chat-bubble__text details ul {
