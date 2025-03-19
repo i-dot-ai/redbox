@@ -29,7 +29,6 @@ from redbox_app.worker import ingest
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-env = redbox.Settings()
 tokeniser = get_tokeniser()
 
 
@@ -661,7 +660,7 @@ class ChatMessage(UUIDPrimaryKeyBase):
         if settings.ELASTIC_CLIENT:
             try:
                 settings.ELASTIC_CLIENT.create(
-                    index=env.elastic_chat_message_index,
+                    index=settings.ELASTIC_CHAT_MESSAGE_INDEX,
                     id=uuid.uuid4(),
                     document=elastic_log_msg,
                 )
