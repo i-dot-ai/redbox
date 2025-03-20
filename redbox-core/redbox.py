@@ -1,3 +1,5 @@
+import json
+import re
 from functools import cache, lru_cache
 
 import boto3
@@ -7,11 +9,11 @@ from _datetime import timedelta
 from elasticsearch import ConnectionError, Elasticsearch
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
+from langchain_core.messages import AIMessage, AnyMessage, BaseMessage, SystemMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_mcp import MCPToolkit
-from langgraph.prebuilt import create_react_agent
-from langgraph.prebuilt.chat_agent_executor import AgentStatePydantic
+from langgraph.prebuilt import ToolNode
+from langgraph.graph import StateGraph, MessagesState, START, END
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 from pydantic import BaseModel, Field
@@ -129,7 +131,7 @@ class RedboxState(BaseModel):
             model_provider=self.chat_backend.provider,
         )
 
-    def get_agent_state(self) -> AgentStatePydantic:
+    def get_messages(self) -> list[BaseMessage]:
         settings = Settings()
 
         input_state = self.model_dump()
@@ -138,7 +140,7 @@ class RedboxState(BaseModel):
             .invoke(input=input_state)
             .to_messages()
         )
-        return AgentStatePydantic(messages=system_messages + self.messages)
+        return system_messages + self.messages
 
 
 async def _default_callback(*args, **kwargs):
@@ -155,6 +157,54 @@ def run_sync(state: RedboxState) -> tuple[BaseMessage, timedelta]:
     return result, end - start
 
 
+async def build_mcp_workflow(llm, session):
+    toolkit = MCPToolkit(session=session)
+    await toolkit.initialize()
+    tools = toolkit.get_tools()
+
+    workflow = StateGraph(MessagesState)
+    tool_node = ToolNode(tools)
+
+    def prepare_question(state: MessagesState):
+        messages = state["messages"][-1:]
+        response = llm.bind_tools(tools).invoke(messages)
+        return {"messages": [response]}
+
+    def call_model(state: MessagesState):
+        messages = state["messages"] + [SystemMessage("prettify the last response")]
+        response = llm.invoke(messages)
+        return {"messages": [response]}
+
+    workflow.add_node("caddy", prepare_question)
+    workflow.add_node("tool_node", tool_node)
+    workflow.add_node("answer", call_model)
+
+    workflow.add_edge(START, "caddy")
+    workflow.add_edge("caddy", "tool_node")
+    workflow.add_edge("tool_node", "answer")
+    workflow.add_edge("answer", END)
+    return workflow.compile()
+
+
+request_format = """
+calling caddy:
+
+```
+{request}
+```
+
+"""
+
+response_format = """
+caddy responds:
+
+```
+{request}
+```
+
+"""
+
+
 async def run_async(
     state: RedboxState,
     mcp_url: str,
@@ -165,30 +215,41 @@ async def run_async(
 
     llm = state.get_llm()
 
-    agent_state = state.get_agent_state()
+    messages = state.get_messages()
     final_message = ""
 
-    async with sse_client(mcp_url) as (read, write):
-        async with ClientSession(read, write) as session:
-            toolkit = MCPToolkit(session=session)
-            await toolkit.initialize()
+    if re.search(r"@caddy[^\w]+", messages[-1].content, re.IGNORECASE):
+        async with sse_client(mcp_url) as (read, write):
+            async with ClientSession(read, write) as session:
 
-            tools = toolkit.get_tools()
+                app = await build_mcp_workflow(llm, session)
 
-            graph = create_react_agent(
-                llm,
-                tools=tools,
-            )
+                async for event in app.astream_events(
+                    {"messages": messages},
+                    version="v2",
+                ):
+                    if event["event"] == "on_tool_start":
+                        await response_tokens_callback(request_format.format(request=json.dumps(event["data"]["input"]["request"])))
+                    elif event["event"] == "on_tool_end":
+                        await response_tokens_callback(response_format.format(request=json.dumps(event["data"]["output"].model_dump())))
+                    elif event["event"] == "on_chat_model_stream":
+                        if end is None:
+                            end = datetime.datetime.now()
+                        content = event["data"]["chunk"].content
+                        final_message += content
+                        await response_tokens_callback(content)
 
-            async for event in graph.astream_events(
-                agent_state,
-                version="v2",
-            ):
-                if event["event"] == "on_chat_model_stream":
-                    if end is None:
-                        end = datetime.datetime.now()
-                    content = event["data"]["chunk"].content
-                    final_message += content
-                    await response_tokens_callback(content)
+    else:
 
-        return AIMessage(content=final_message), end - start
+        async for event in llm.astream_events(
+            messages,
+            version="v2",
+        ):
+            if event["event"] == "on_chat_model_stream":
+                if end is None:
+                    end = datetime.datetime.now()
+                content = event["data"]["chunk"].content
+                final_message += content
+                await response_tokens_callback(content)
+
+    return AIMessage(content=final_message), end - start
