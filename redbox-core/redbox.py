@@ -229,9 +229,10 @@ async def run_async(
                     version="v2",
                 ):
                     if event["event"] == "on_tool_start":
-                        await response_tokens_callback(request_format.format(request=json.dumps(event["data"]["input"]["request"])))
+                        await response_tokens_callback(request_format.format(request=json.dumps(event["data"]["input"]["request"], indent=2)))
                     elif event["event"] == "on_tool_end":
-                        await response_tokens_callback(response_format.format(request=json.dumps(event["data"]["output"].model_dump())))
+                        text = json.loads(event["data"]["output"].content)[0]["text"]
+                        await response_tokens_callback(response_format.format(request=text))
                     elif event["event"] == "on_chat_model_stream":
                         if end is None:
                             end = datetime.datetime.now()
