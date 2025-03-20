@@ -10,6 +10,16 @@
           You
         {% endif %}
       </div>
+      {# If we want to display tools in a similar way to how we displayed routes
+      <div class="iai-chat-bubble__route">
+          <tool-tip class="iai-tooltip">
+              <div class="iai-tooltip__button">
+                  <span><a href="#tools" class="govuk-link">Response generated using the <strong>Caddy Tool 1</strong> tool</a></span>
+                  <img src="/dist/icons/question-mark.svg" alt="" width="14"/>
+              </div>
+          </tool-tip>
+      </div>
+      #}
     </div>
 
     <markdown-converter class="iai-chat-bubble__text" data-role="{{ message.role }}">{{ message.text }}</markdown-converter>

@@ -99,13 +99,50 @@
             {# Testing Tools #}
             {% set message = {
               "role": "ai",
-              "text": '<p>Redbox would like to use the <strong>Caddy</strong> tool.</p><div class="govuk-button-group"><button class="govuk-button">Continue</button><button class="govuk-button govuk-button--secondary">Do not use tool</button><a class="govuk-link" href="#settings">Tool settings</a></div>',
+              "text": '<p>Redbox would like to use the <strong>Caddy</strong> tool. Your prompt will be sent to the tool.</p><div class="govuk-button-group"><button class="govuk-button">Continue</button><button class="govuk-button govuk-button--secondary">Do not use tool</button><a class="govuk-link govuk-body-s" href="#settings">Tool settings</a></div>',
             } %}
             {{ message_box(message=message) }}
 
             {% set message = {
               "role": "ai",
               "text": '<p>Redbox would like to use the <strong>[Tool Name]</strong> tool with the following settings:</p><div class="govuk-form-group"><label class="govuk-label">Parameter 1</label><input class="govuk-input" type="text" value="Automatically extracted from prompt"/></div><div class="govuk-form-group"><label class="govuk-label">Parameter 2</label><input class="govuk-input" type="text" value="The user can amend these before sending"/></div><div class="govuk-button-group"><button class="govuk-button">Continue</button><button class="govuk-button govuk-button--secondary">Do not use tool</button><a class="govuk-link" href="#settings">Tool settings</a></div>',
+            } %}
+            {{ message_box(message=message) }}
+
+            {% set message = {
+              "role": "ai",
+              "text": '<div class="govuk-summary-card govuk-!-margin-top-3">
+                  <div class="govuk-summary-card__title-wrapper">
+                    <h2 class="govuk-body-s govuk-!-margin-bottom-0">
+                      Calling <strong>Caddy</strong> with the following settings
+                    </h2>
+                    <ul class="govuk-summary-card__actions">
+                      <li class="govuk-summary-card__action">
+                        <a class="govuk-link" href="#">Tool settings</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="govuk-summary-card__content">
+                    <dl class="govuk-summary-list">
+                      <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key govuk-body-s">
+                          Category
+                        </dt>
+                        <dd class="govuk-summary-list__value govuk-body-s">
+                          Legal
+                        </dd>
+                      </div>
+                      <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key govuk-body-s">
+                          Query
+                        </dt>
+                        <dd class="govuk-summary-list__value govuk-body-s">
+                          Amended version of the user prompt
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div><p>The response then appears here as normal. Immediate steps you can take to resolve your issue include the following ...</p>',
             } %}
             {{ message_box(message=message) }}
 
