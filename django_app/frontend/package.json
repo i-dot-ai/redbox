@@ -34,6 +34,10 @@
     {
       "distDir": "./dist/js/libs",
       "staticPath": "./src/js/libs"
+    },
+    {
+      "distDir": "./dist/js/libs/mermaid",
+      "staticPath": "./node_modules/mermaid/dist"
     }
   ],
   "scripts": {
@@ -44,8 +48,9 @@
   "author": "",
   "dependencies": {
     "govuk-frontend": "^5.2.0",
-    "i.ai-design-system": "^0.5.1",
+    "i.ai-design-system": "^0.5.2",
     "lit": "^3.2.1",
+    "mermaid": "^11.2.1",
     "posthog-js": "^1.143.0"
   },
   "devDependencies": {

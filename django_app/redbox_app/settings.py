@@ -9,6 +9,7 @@ import environ
 import sentry_sdk
 from django.urls import reverse_lazy
 from dotenv import load_dotenv
+from elasticsearch import Elasticsearch
 from import_export.formats.base_formats import CSV
 from sentry_sdk.integrations.django import DjangoIntegration
 from storages.backends import s3boto3
@@ -187,7 +188,7 @@ CSP_SCRIPT_SRC = (
 )
 CSP_OBJECT_SRC = ("'none'",)
 CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
-CSP_TRUSTED_TYPES = ("dompurify", "lit-html", "default")
+CSP_TRUSTED_TYPES = ("dompurify", "dompurifyMermaid", "lit-html", "default")
 CSP_REPORT_TO = "csp-endpoint"
 CSP_FONT_SRC = (
     "'self'",
@@ -405,3 +406,21 @@ if credentials := os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"):
 
 METRICS_FILE_NAME = "metrics.csv"
 USER_FILE_NAME = "users.csv"
+
+
+ELASTIC_CHAT_MESSAGE_INDEX = env.str("ELASTIC_CHAT_MESSAGE_INDEX", None)
+
+if ELASTIC_CHAT_MESSAGE_INDEX is None:
+    ELASTIC_CLIENT = None
+else:
+    cloud_id = env.str("ELASTIC_CLOUD_ID")
+    api_key = env.str("ELASTIC_API_KEY")
+    client = Elasticsearch(cloud_id=cloud_id, api_key=api_key)
+
+    try:
+        if not client.indices.exists(index=ELASTIC_CHAT_MESSAGE_INDEX):
+            client.indices.create(index=ELASTIC_CHAT_MESSAGE_INDEX)
+    except ConnectionError:
+        pass
+
+    ELASTIC_CLIENT = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)

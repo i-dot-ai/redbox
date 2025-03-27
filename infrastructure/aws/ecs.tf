@@ -101,8 +101,8 @@ module "worker" {
   #source                      = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/ecs" # For testing local changes
   source                       = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/ecs?ref=v5.0.1-ecs"
   command = ["venv/bin/django-admin", "qcluster"]
-  memory                       = var.env == "prod" ? 1024 : 512
-  cpu                          = var.env == "prod" ? 512 : 256
+  memory                       = var.env == "prod" ? 4096 : 512
+  cpu                          = var.env == "prod" ? 2048 : 256
   create_listener              = false
   create_networking            = false
   name                         = "${local.name}-worker"
@@ -111,7 +111,7 @@ module "worker" {
   ecs_cluster_id               = module.cluster.ecs_cluster_id
   ecs_cluster_name             = module.cluster.ecs_cluster_name
   autoscaling_minimum_target   = 1
-  autoscaling_maximum_target   = 1
+  autoscaling_maximum_target   = 10
   vpc_id                       = data.terraform_remote_state.vpc.outputs.vpc_id
   private_subnets              = data.terraform_remote_state.vpc.outputs.private_subnets
   container_port               = 5000

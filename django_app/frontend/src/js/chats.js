@@ -21,6 +21,8 @@ import "./web-components/documents/upload-container.mjs";
 
 import "./tour.js";
 
+import "./mermaid.mjs";
+
 document.addEventListener("chat-response-end", (evt) => {
   
   // Update URL when a new chat is created

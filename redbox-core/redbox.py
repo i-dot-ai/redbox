@@ -1,12 +1,11 @@
+from functools import cache
 import json
 import re
-from functools import cache, lru_cache
 
 import boto3
 import datetime
 import tiktoken
 from _datetime import timedelta
-from elasticsearch import ConnectionError, Elasticsearch
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage, SystemMessage
@@ -20,16 +19,6 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ElasticCloudSettings(BaseModel):
-    """settings required for elastic-cloud"""
-
-    model_config = SettingsConfigDict(frozen=True)
-
-    api_key: str
-    cloud_id: str
-    subscription_level: str = "basic"
-
-
 class ChatLLMBackend(BaseModel):
     name: str = "gpt-4o"
     provider: str = "azure_openai"
@@ -40,9 +29,6 @@ class ChatLLMBackend(BaseModel):
 
 class Settings(BaseSettings):
     """Settings for the redbox application."""
-
-    elastic: ElasticCloudSettings | None = None
-    elastic_chat_message_index: str = "redbox-data-chat-mesage-log"
 
     minio_host: str = "minio"
     minio_port: int = 9000
@@ -71,21 +57,6 @@ Title: {{d.metadata.get("uri", "unknown document")}}
 """
 
     model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__", extra="allow", frozen=True)
-
-    @lru_cache(1)
-    def elasticsearch_client(self) -> Elasticsearch | None:
-        if self.elastic is None:
-            return None
-
-        client = Elasticsearch(cloud_id=self.elastic.cloud_id, api_key=self.elastic.api_key)
-
-        try:
-            if not client.indices.exists(index=self.elastic_chat_message_index):
-                client.indices.create(index=self.elastic_chat_message_index)
-        except ConnectionError:
-            pass
-
-        return client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
 
     def s3_client(self):
         if self.object_store == "minio":
@@ -221,7 +192,6 @@ async def run_async(
     if re.search(r"@caddy[^\w]+", messages[-1].content, re.IGNORECASE):
         async with sse_client(mcp_url) as (read, write):
             async with ClientSession(read, write) as session:
-
                 app = await build_mcp_workflow(llm, session)
 
                 async for event in app.astream_events(
@@ -229,7 +199,9 @@ async def run_async(
                     version="v2",
                 ):
                     if event["event"] == "on_tool_start":
-                        await response_tokens_callback(request_format.format(request=json.dumps(event["data"]["input"]["request"], indent=2)))
+                        await response_tokens_callback(
+                            request_format.format(request=json.dumps(event["data"]["input"]["request"], indent=2))
+                        )
                     elif event["event"] == "on_tool_end":
                         text = json.loads(event["data"]["output"].content)[0]["text"]
                         await response_tokens_callback(response_format.format(request=text))
@@ -241,7 +213,6 @@ async def run_async(
                         await response_tokens_callback(content)
 
     else:
-
         async for event in llm.astream_events(
             messages,
             version="v2",
