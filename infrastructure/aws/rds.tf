@@ -24,7 +24,7 @@ module "rds" {
 
 module "rds-aurora" {
   #   source = "../../i-dot-ai-core-terraform-modules//modules/infrastructure/rds"  # For testing local changes
-  source                 = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v3.4.0-rds"
+  source                 = "git::https://github.com/i-dot-ai/i-dot-ai-core-terraform-modules.git//modules/infrastructure/rds?ref=v3.4.1-rds"
   db_name                = replace(var.project_name, "-", "_")
   kms_secrets_arn        = data.terraform_remote_state.platform.outputs.kms_key_arn
   name                   = local.name
