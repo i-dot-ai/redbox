@@ -20,9 +20,11 @@ provider "aws" {
       "platform:repository"     = "https://github.com/i-dot-ai/redbox"
       "platform:security-level" = "base"
 
-      Organisation  = "co"
-      Department    = "i-dot-ai"
-      "Cost Centre" = "i-dot-ai"
+      Organisation   = "co"
+      Department     = "i-dot-ai"
+      "Cost Centre"  = "i-dot-ai"
+      BillingProject = "redbox"
+      Environment    = var.env
     }
   }
 }
