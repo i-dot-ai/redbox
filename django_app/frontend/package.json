@@ -47,7 +47,7 @@
   },
   "author": "",
   "dependencies": {
-    "govuk-frontend": "^5.2.0",
+    "govuk-frontend": "5.10.2",
     "i.ai-design-system": "^0.5.2",
     "lit": "^3.2.1",
     "mermaid": "^11.2.1",
