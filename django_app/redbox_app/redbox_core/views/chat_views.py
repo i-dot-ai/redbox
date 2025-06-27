@@ -23,6 +23,7 @@ class ChatsViewNew(View):
         chat = Chat.objects.create(
             name="New chat",
             user=request.user,
+            temperature=settings.TEMPERATURE
         )
         return redirect(reverse("chats", kwargs={"chat_id": chat.id}))
 

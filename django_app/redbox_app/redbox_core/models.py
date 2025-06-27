@@ -9,6 +9,7 @@ from typing import override
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core import validators
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg, Count, Max, Min, Sum, UniqueConstraint
 from django.utils import timezone
@@ -16,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
+from isort.profiles import django
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 from pytz import utc
@@ -358,7 +360,8 @@ class Chat(UUIDPrimaryKeyBase):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
     chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
-    temperature = models.FloatField(default=0, help_text="temperature for LLM")
+    temperature = models.FloatField(default=0, help_text="temperature for LLM", validators=[MaxValueValidator(1),
+            MinValueValidator(0)])
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
@@ -426,6 +429,7 @@ class Chat(UUIDPrimaryKeyBase):
             ],
             messages=[message.to_langchain() for message in self.chatmessage_set.order_by("created_at")],
             chat_backend=chat_backend,
+            temperature=self.temperature,
         )
 
     def context_window_size(self) -> int:

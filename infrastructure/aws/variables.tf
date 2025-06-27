@@ -250,3 +250,9 @@ variable "google_application_credentials_json" {
   default = null
   description = "google application credentials for vertex-ai"
 }
+
+variable "temperature" {
+  type = number
+  default = 0
+  description = "llm temperature"
+}

@@ -424,3 +424,6 @@ else:
         pass
 
     ELASTIC_CLIENT = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+
+
+TEMPERATURE = os.getenv("TEMPERATURE", 0.2)
