@@ -20,11 +20,7 @@ logger = logging.getLogger(__name__)
 class ChatsViewNew(View):
     @method_decorator(login_required)
     def get(self, request: HttpRequest) -> HttpResponse:
-        chat = Chat.objects.create(
-            name="New chat",
-            user=request.user,
-            temperature=settings.TEMPERATURE
-        )
+        chat = Chat.objects.create(name="New chat", user=request.user, temperature=settings.TEMPERATURE)
         return redirect(reverse("chats", kwargs={"chat_id": chat.id}))
 
 

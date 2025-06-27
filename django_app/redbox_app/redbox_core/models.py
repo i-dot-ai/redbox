@@ -17,7 +17,6 @@ from django.utils.translation import gettext_lazy as _
 from django_q.models import OrmQ, Success
 from django_q.tasks import async_task
 from django_use_email_as_username.models import BaseUser, BaseUserManager
-from isort.profiles import django
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 from pytz import utc
@@ -360,8 +359,9 @@ class Chat(UUIDPrimaryKeyBase):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archived = models.BooleanField(default=False, null=True, blank=True)
     chat_backend = models.ForeignKey(ChatLLMBackend, on_delete=models.CASCADE, help_text="LLM to use in chat")
-    temperature = models.FloatField(default=0, help_text="temperature for LLM", validators=[MaxValueValidator(1),
-            MinValueValidator(0)])
+    temperature = models.FloatField(
+        default=0, help_text="temperature for LLM", validators=[MaxValueValidator(1), MinValueValidator(0)]
+    )
 
     # Exit feedback - this is separate to the ratings for individual ChatMessages
     feedback_achieved = models.BooleanField(
