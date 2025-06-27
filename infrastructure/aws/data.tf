@@ -56,6 +56,7 @@ locals {
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
     "SLACK_NOTIFICATION_URL" : var.slack_url
+    "TEMPERATURE": var.temperature
   }
 
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]

@@ -81,6 +81,7 @@ class RedboxState(BaseModel):
     documents: list[Document] = Field(description="List of files to process", default_factory=list)
     messages: list[AnyMessage] = Field(description="All previous messages in chat", default_factory=list)
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
+    temperature: float = 0
 
     def get_llm(self):
         if self.chat_backend.provider == "google_vertexai":
@@ -89,10 +90,12 @@ class RedboxState(BaseModel):
                 model_provider=self.chat_backend.provider,
                 location="europe-west1",
                 # europe-west1 = Belgium
+                temperature=self.temperature,
             )
         return init_chat_model(
             model=self.chat_backend.name,
             model_provider=self.chat_backend.provider,
+            temperature=self.temperature,
         )
 
     def get_messages(self) -> list[BaseMessage]:
