@@ -83,15 +83,22 @@ class RedboxState(BaseModel):
     messages: list[AnyMessage] = Field(description="All previous messages in chat", default_factory=list)
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
 
+    def get_model_name(self):
+        match self.chat_backend.name:
+            case "anthropic.claude-3-sonnet-20240229-v1:0":
+                return "bedrock-claude-3-sonnet"
+            case "anthropic.claude-3-haiku-20240307-v1:0":
+                return "bedrock-claude-3-haiku"
+            case "gemini-2.0-flash-001":
+                return "gemini-2-flash"
+            case _:
+                return self.chat_backend.name
+
     def get_llm(self):
         api_key = os.environ["LITELLM_PROXY_API_KEY"]
         base_url = os.environ["LITELLM_PROXY_API_BASE"]
-        provider_mapping = {"azure_openai": "azure", "google_vertexai": "gemini", "bedrock": "bedrock"}[
-            self.chat_backend.provider
-        ]
-        model = f"{provider_mapping}/{self.chat_backend.name}"
-        client = OpenAI(model=model, base_url=base_url, api_key=api_key)
-        return client
+        model = self.get_model_name()
+        return OpenAI(model=model, base_url=base_url, api_key=api_key)
 
     def get_messages(self) -> list[BaseMessage]:
         settings = Settings()
