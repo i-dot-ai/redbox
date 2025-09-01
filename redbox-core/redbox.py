@@ -13,7 +13,6 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-
 class ChatLLMBackend(BaseModel):
     name: str = "gpt-4o"
     provider: str = "azure_openai"
