@@ -8,12 +8,10 @@ from _datetime import timedelta
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import OpenAI, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-import litellm
-import os
 
 
 class ChatLLMBackend(BaseModel):
