@@ -86,11 +86,12 @@ class RedboxState(BaseModel):
     def get_llm(self):
         api_key = os.environ["LITELLM_PROXY_API_KEY"]
         base_url = os.environ["LITELLM_PROXY_API_BASE"]
-        provider_mapping = {"azure_openai": "azure", "google_vertexai": "gemini", "bedrock": "bedrock"}[self.chat_backend.provider]
+        provider_mapping = {"azure_openai": "azure", "google_vertexai": "gemini", "bedrock": "bedrock"}[
+            self.chat_backend.provider
+        ]
         model = f"{provider_mapping}/{self.chat_backend.name}"
         client = OpenAI(model=model, base_url=base_url, api_key=api_key)
         return client
-
 
     def get_messages(self) -> list[BaseMessage]:
         settings = Settings()
