@@ -44,10 +44,8 @@ locals {
     "ELASTIC_API_KEY" : var.elastic_api_key,
     "ELASTIC_CLOUD_ID" : var.cloud_id,
 
-    "AZURE_OPENAI_API_KEY": var.azure_openai_api_key,
-    "AZURE_OPENAI_ENDPOINT" : var.azure_openai_endpoint,
-    "OPENAI_API_VERSION": var.openai_api_version,
-    "GOOGLE_APPLICATION_CREDENTIALS_JSON": var.google_application_credentials_json,
+    "LITELLM_PROXY_API_BASE": var.litellm_proxy_api_base,
+    "LITELLM_PROXY_API_KEY": var.litellm_proxy_api_key,
 
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
@@ -55,7 +53,7 @@ locals {
     "POSTGRES_USER" : module.rds.rds_instance_username,
     "GOVUK_NOTIFY_API_KEY" : var.govuk_notify_api_key,
     "SENTRY_DSN" : var.sentry_dsn,
-    "SLACK_NOTIFICATION_URL" : var.slack_url
+    "SLACK_NOTIFICATION_URL" : var.slack_url,
   }
 
   reconstructed_django_secrets = [for k, _ in local.django_app_secrets : { name = k, valueFrom = "${aws_secretsmanager_secret.django-app-secret.arn}:${k}::" }]

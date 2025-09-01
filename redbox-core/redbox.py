@@ -1,13 +1,14 @@
+import os
 from functools import cache
 
 import boto3
 import datetime
 import tiktoken
 from _datetime import timedelta
-from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
+from langchain_openai import OpenAI
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -83,17 +84,13 @@ class RedboxState(BaseModel):
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
 
     def get_llm(self):
-        if self.chat_backend.provider == "google_vertexai":
-            return init_chat_model(
-                model=self.chat_backend.name,
-                model_provider=self.chat_backend.provider,
-                location="europe-west1",
-                # europe-west1 = Belgium
-            )
-        return init_chat_model(
-            model=self.chat_backend.name,
-            model_provider=self.chat_backend.provider,
-        )
+        api_key = os.environ["LITELLM_PROXY_API_KEY"]
+        base_url = os.environ["LITELLM_PROXY_API_BASE"]
+        provider_mapping = {"azure_openai": "azure", "google_vertexai": "gemini", "bedrock": "bedrock"}[self.chat_backend.provider]
+        model = f"{provider_mapping}/{self.chat_backend.name}"
+        client = OpenAI(model=model, base_url=base_url, api_key=api_key)
+        return client
+
 
     def get_messages(self) -> list[BaseMessage]:
         settings = Settings()

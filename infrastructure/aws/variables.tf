@@ -250,3 +250,16 @@ variable "google_application_credentials_json" {
   default = null
   description = "google application credentials for vertex-ai"
 }
+
+
+variable "litellm_proxy_api_key" {
+  type = string
+  sensitive = true
+  description = "LITELLM_PROXY_API_KEY"
+}
+
+variable "litellm_proxy_api_base" {
+  type = string
+  sensitive = true
+  description = "LITELLM_PROXY_API_BASE"
+}
