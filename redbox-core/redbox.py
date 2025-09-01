@@ -8,9 +8,12 @@ from _datetime import timedelta
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import OpenAI
+from langchain_openai import OpenAI, ChatOpenAI
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+import litellm
+import os
 
 
 class ChatLLMBackend(BaseModel):
@@ -98,7 +101,7 @@ class RedboxState(BaseModel):
         api_key = os.environ["LITELLM_PROXY_API_KEY"]
         base_url = os.environ["LITELLM_PROXY_API_BASE"]
         model = self.get_model_name()
-        return OpenAI(model=model, base_url=base_url, api_key=api_key)
+        return ChatOpenAI(model=model, base_url=base_url, api_key=api_key)
 
     def get_messages(self) -> list[BaseMessage]:
         settings = Settings()
@@ -131,16 +134,10 @@ async def run_async(
     response_tokens_callback=_default_callback,
 ) -> tuple[AIMessage, timedelta]:
     start = datetime.datetime.now()
-    end = None
     final_message = ""
-    async for event in state.get_llm().astream_events(
+    async for chunk in state.get_llm().astream(
         state.get_messages(),
-        version="v2",
     ):
-        if event["event"] == "on_chat_model_stream":
-            if end is None:
-                end = datetime.datetime.now()
-            content = event["data"]["chunk"].content
-            final_message += content
-            await response_tokens_callback(content)
-    return AIMessage(content=final_message), end - start
+        final_message += chunk.content
+        await response_tokens_callback(chunk.content)
+    return AIMessage(content=final_message), datetime.datetime.now() - start
