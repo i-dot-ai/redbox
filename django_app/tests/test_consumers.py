@@ -419,6 +419,18 @@ class CannedGraphLLM(BaseChatModel):
         for response in self.responses:
             yield response
 
+    async def astream(self, *_args, **_kwargs):
+        for response in self.responses:
+            if response.get("event") == "on_chat_model_stream":
+                chunk_data = response.get("data", {}).get("chunk")
+                if chunk_data:
+                    yield AIMessageChunk(content=chunk_data.content)
+            elif response.get("event") == "on_chain_end":
+                output = response.get("data", {}).get("output")
+                if output and hasattr(output, "content"):
+                    # Final message - we don't yield this in astream
+                    pass
+
 
 @pytest.fixture()
 def mocked_connect() -> Connect:
@@ -457,6 +469,7 @@ def mocked_connect_with_naughty_citation() -> CannedGraphLLM:
 def mocked_breaking_connect() -> Connect:
     mocked_graph = MagicMock(name="mocked_graph")
     mocked_graph.astream_events.side_effect = CancelledError()
+    mocked_graph.astream.side_effect = CancelledError()
     return mocked_graph
 
 

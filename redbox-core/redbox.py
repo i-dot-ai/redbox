@@ -1,13 +1,14 @@
+import os
 from functools import cache
 
 import boto3
 import datetime
 import tiktoken
 from _datetime import timedelta
-from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, AnyMessage, BaseMessage
 from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -83,17 +84,9 @@ class RedboxState(BaseModel):
     chat_backend: ChatLLMBackend = Field(description="User request AI settings", default_factory=ChatLLMBackend)
 
     def get_llm(self):
-        if self.chat_backend.provider == "google_vertexai":
-            return init_chat_model(
-                model=self.chat_backend.name,
-                model_provider=self.chat_backend.provider,
-                location="europe-west1",
-                # europe-west1 = Belgium
-            )
-        return init_chat_model(
-            model=self.chat_backend.name,
-            model_provider=self.chat_backend.provider,
-        )
+        api_key = os.environ["LITELLM_PROXY_API_KEY"]
+        base_url = os.environ["LITELLM_PROXY_API_BASE"]
+        return ChatOpenAI(model=self.chat_backend.name, base_url=base_url, api_key=api_key)
 
     def get_messages(self) -> list[BaseMessage]:
         settings = Settings()
@@ -126,16 +119,10 @@ async def run_async(
     response_tokens_callback=_default_callback,
 ) -> tuple[AIMessage, timedelta]:
     start = datetime.datetime.now()
-    end = None
     final_message = ""
-    async for event in state.get_llm().astream_events(
+    async for chunk in state.get_llm().astream(
         state.get_messages(),
-        version="v2",
     ):
-        if event["event"] == "on_chat_model_stream":
-            if end is None:
-                end = datetime.datetime.now()
-            content = event["data"]["chunk"].content
-            final_message += content
-            await response_tokens_callback(content)
-    return AIMessage(content=final_message), end - start
+        final_message += chunk.content
+        await response_tokens_callback(chunk.content)
+    return AIMessage(content=final_message), datetime.datetime.now() - start
