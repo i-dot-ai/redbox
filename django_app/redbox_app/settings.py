@@ -166,9 +166,6 @@ SOCIAL_AUTH_OIDC_SECRET = env.str("GOV_UK_SSO_CLIENT_SECRET")
 SOCIAL_AUTH_OIDC_SCOPE = ["openid", "email", "profile"]
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 
-# Custom redirect URI for OAuth callback
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = not ENVIRONMENT.is_local
-
 # User creation settings
 SOCIAL_AUTH_USER_FIELDS = ["email"]
 SOCIAL_AUTH_OIDC_USER_FIELDS = ["email"]
@@ -179,6 +176,7 @@ SOCIAL_AUTH_UPDATE_USER_DATA = True
 if ENVIRONMENT.is_local:
     SOCIAL_AUTH_OIDC_IGNORE_DEFAULT_SCOPE = True
     SOCIAL_AUTH_OIDC_STATE = False
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
 
 # Session settings (keep existing 21-hour session)
 SESSION_COOKIE_SAMESITE = "Strict"
