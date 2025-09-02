@@ -15,7 +15,7 @@ admin.autodiscover()
 
 auth_urlpatterns = [
     path("auth/", include("social_django.urls", namespace="social")),
-    path("log-in/", views.oauth_login_view, name="log-in"),
+    path("log-in/", RedirectView.as_view(url="/auth/login/oidc/"), name="log-in"),
     path("sign-in/", RedirectView.as_view(url="/log-in/")),
     path("logged-out/", views.signed_out_view, name="logged-out"),
     path("sign-up-page-1", views.Signup1.as_view(), name="sign-up-page-1"),

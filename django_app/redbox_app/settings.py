@@ -166,6 +166,9 @@ SOCIAL_AUTH_OIDC_SECRET = env.str("GOV_UK_SSO_CLIENT_SECRET")
 SOCIAL_AUTH_OIDC_SCOPE = ["openid", "email", "profile"]
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 
+# Custom redirect URI for OAuth callback
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not ENVIRONMENT.is_local
+
 # User creation settings
 SOCIAL_AUTH_USER_FIELDS = ["email"]
 SOCIAL_AUTH_OIDC_USER_FIELDS = ["email"]
@@ -419,4 +422,3 @@ else:
         pass
 
     ELASTIC_CLIENT = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
-
