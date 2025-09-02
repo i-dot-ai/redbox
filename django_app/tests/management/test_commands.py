@@ -1,76 +1,18 @@
 import contextlib
 import json
-from datetime import UTC, datetime, timedelta
-from io import StringIO
+from datetime import datetime, timedelta
 
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.management import CommandError, call_command
+from django.core.management import call_command
 from django.utils import timezone
 from freezegun import freeze_time
-from magic_link.models import MagicLink
 from pytz import utc
 
 from redbox_app.redbox_core.models import Chat, ChatMessage, File
 
 User = get_user_model()
-
-
-# === check_file_status command tests ===
-
-
-# === show_magiclink_url command tests ===
-
-
-@pytest.mark.django_db()
-def test_command_output_no_such_user():
-    # Given
-
-    # When
-    with pytest.raises(CommandError) as exception:
-        call_command("show_magiclink_url", "alice@example.com")
-
-    # Then
-    assert str(exception.value) == "No User found with email alice@example.com"
-
-
-@pytest.mark.django_db()
-def test_command_output_no_links_ever(alice: User):
-    # Given
-
-    # When
-    with pytest.raises(CommandError) as exception:
-        call_command("show_magiclink_url", alice.email)
-
-    # Then
-    assert str(exception.value) == f"No MagicLink found for user {alice.email}"
-
-
-@pytest.mark.django_db()
-def test_command_output_no_valid_links(alice: User):
-    # Given
-    MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) - timedelta(seconds=10))
-
-    # When
-    with pytest.raises(CommandError) as exception:
-        call_command("show_magiclink_url", alice.email)
-
-    # Then
-    assert str(exception.value) == f"No active link for user {alice.email}"
-
-
-@pytest.mark.django_db()
-def test_command_output_with_valid_links(alice: User):
-    # Given
-    link: MagicLink = MagicLink.objects.create(user=alice, expires_at=datetime.now(UTC) + timedelta(seconds=10))
-    out, err = StringIO(), StringIO()
-
-    # When
-    call_command("show_magiclink_url", alice.email, stdout=out, stderr=err)
-
-    # Then
-    assert out.getvalue().strip() == link.get_absolute_url()
 
 
 # === delete_expired_data command tests ===

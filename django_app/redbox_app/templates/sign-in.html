@@ -11,23 +11,16 @@
 
       <h1 class="govuk-heading-l">Log in</h1>
 
-      <form method="post" action="/log-in/">
+      <p class="govuk-body">
+        Use your gov.uk Single Sign-On account to access Redbox.
+      </p>
 
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-        <div class="govuk-form-group govuk-!-margin-bottom-2">
-          <label class="govuk-label" for="email">
-            Email address
-          </label>
-          <div id="email-hint" class="govuk-hint">
-            Enter your email address to generate a link to log in
-          </div>
-          <input class="govuk-input" id="email" name="email" type="email" spellcheck="false" aria-describedby="email-hint" autocomplete="email" required>
-        </div>
-
-        {{ govukButton(text="Continue") }}
-
-      </form>
+      <a href="{% url 'social:begin' 'oidc' %}" class="govuk-button govuk-button--start" role="button">
+        Log in with gov.uk SSO
+        <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="m0 0h13l20 20-20 20H0l20-20z"/>
+        </svg>
+      </a>
     
     </div>
   </div>

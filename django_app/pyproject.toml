@@ -10,7 +10,6 @@ python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
 django = "^5.1"
 django-libsass = "^0.9"
-django-magic-link = "^1.0.0"
 whitenoise = "^6.6.0"
 watchdog = {extras = ["watchmedo"], version = "^4.0.2"}
 jinja2 = "^3.1.5"
@@ -43,7 +42,7 @@ django-adminplus = "^0.6"
 django-waffle = "^4.1.0"
 markitdown = "^0.0.1a3"
 elasticsearch = "^8.17.1"
-langchain-google-vertexai = "^2.0.13"
+social-auth-app-django = "^5.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
@@ -68,6 +67,7 @@ requests-mock = "^1.12.1"
 django-test-migrations = "^1.3.0"
 beautifulsoup4 = "^4.12"
 gevent = "^24.10.2"
+
 
 
 [build-system]

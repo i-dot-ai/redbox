@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
-from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 from import_export.formats.base_formats import CSV
@@ -63,16 +62,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "magic_link",
+    "social_django",
     "import_export",
     "django_q",
     "rest_framework",
     "adminplus",
     "waffle",
 ]
-
-if LOGIN_METHOD == "sso":
-    INSTALLED_APPS.append("authbroker_client")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -115,6 +111,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -124,11 +122,9 @@ WSGI_APPLICATION = "redbox_app.wsgi.application"
 ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
+    "social_core.backends.open_id_connect.OpenIdConnectAuth",
     "django.contrib.auth.backends.ModelBackend",
 ]
-
-if LOGIN_METHOD == "sso":
-    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -158,19 +154,26 @@ SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-if LOGIN_METHOD == "sso":
-    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
-    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
-    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
-    LOGIN_URL = reverse_lazy("authbroker_client:login")
-    LOGIN_REDIRECT_URL = reverse_lazy("homepage")
-elif LOGIN_METHOD == "magic_link":
-    SESSION_COOKIE_SAMESITE = "Strict"
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "log-in"
-else:
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "log-in"
+# OAuth2 Settings
+LOGIN_URL = "/auth/login/oidc/"
+LOGIN_REDIRECT_URL = "homepage"
+LOGOUT_REDIRECT_URL = "/"
+
+# Social Auth Settings
+SOCIAL_AUTH_OIDC_ENDPOINT = env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.service.security.gov.uk")
+SOCIAL_AUTH_OIDC_KEY = env.str("GOV_UK_SSO_CLIENT_ID")
+SOCIAL_AUTH_OIDC_SECRET = env.str("GOV_UK_SSO_CLIENT_SECRET")
+SOCIAL_AUTH_OIDC_SCOPE = ["openid", "email", "profile"]
+
+# User creation settings
+SOCIAL_AUTH_USER_FIELDS = ["email"]
+SOCIAL_AUTH_OIDC_USER_FIELDS = ["email"]
+SOCIAL_AUTH_CREATE_USERS = True
+SOCIAL_AUTH_UPDATE_USER_DATA = True
+
+# Session settings (keep existing 21-hour session)
+SESSION_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_AGE = 21 * 60 * 60
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -231,7 +234,6 @@ CSRF_COOKIE_HTTPONLY = True
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_COOKIE_SAMESITE = "Strict"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
@@ -352,19 +354,6 @@ else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
 
-# Magic link
-
-MAGIC_LINK = {
-    # link expiry, in seconds
-    "DEFAULT_EXPIRY": 300,
-    # default link redirect
-    "DEFAULT_REDIRECT": "/",
-    # the preferred authorization backend to use, in the case where you have more
-    # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
-    "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
-    # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
-    "SESSION_EXPIRY": 21 * 60 * 60,
-}
 
 IMPORT_FORMATS = [CSV]
 
