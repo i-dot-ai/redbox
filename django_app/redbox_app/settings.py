@@ -155,7 +155,7 @@ AUTH_USER_MODEL = "redbox_core.User"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # OAuth2 Settings
-LOGIN_URL = "/auth/login/oidc/"
+LOGIN_URL = "/log-in/"
 LOGIN_REDIRECT_URL = "homepage"
 LOGOUT_REDIRECT_URL = "/"
 
@@ -164,12 +164,18 @@ SOCIAL_AUTH_OIDC_ENDPOINT = env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.se
 SOCIAL_AUTH_OIDC_KEY = env.str("GOV_UK_SSO_CLIENT_ID")
 SOCIAL_AUTH_OIDC_SECRET = env.str("GOV_UK_SSO_CLIENT_SECRET")
 SOCIAL_AUTH_OIDC_SCOPE = ["openid", "email", "profile"]
+SOCIAL_AUTH_URL_NAMESPACE = "social"
 
 # User creation settings
 SOCIAL_AUTH_USER_FIELDS = ["email"]
 SOCIAL_AUTH_OIDC_USER_FIELDS = ["email"]
 SOCIAL_AUTH_CREATE_USERS = True
 SOCIAL_AUTH_UPDATE_USER_DATA = True
+
+# Disable state verification for local development with Dex
+if ENVIRONMENT.is_local:
+    SOCIAL_AUTH_OIDC_IGNORE_DEFAULT_SCOPE = True
+    SOCIAL_AUTH_OIDC_STATE = False
 
 # Session settings (keep existing 21-hour session)
 SESSION_COOKIE_SAMESITE = "Strict"
@@ -413,3 +419,4 @@ else:
         pass
 
     ELASTIC_CLIENT = client.options(request_timeout=30, retry_on_timeout=True, max_retries=3)
+

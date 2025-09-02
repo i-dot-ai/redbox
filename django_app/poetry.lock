@@ -1672,25 +1672,6 @@ files = [
 Django = ">=3.0"
 
 [[package]]
-name = "django-staff-sso-client"
-version = "4.4.1"
-description = "Reusable Django app to facilitate gov.uk Staff Single Sign On"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "django_staff_sso_client-4.4.1-py3-none-any.whl", hash = "sha256:9950087cc12314fa0191884bc82a1b804a58506d8a9e237d4751dc6f4ada95c5"},
-    {file = "django_staff_sso_client-4.4.1.tar.gz", hash = "sha256:3367cde3b7e7cfc707c115b4a392c63a7f8acb95dbc3e8f7af7e44416582d56e"},
-]
-
-[package.dependencies]
-Django = ">=4.2.10,<6.0"
-requests_oauthlib = "*"
-
-[package.extras]
-test = ["build", "codecov", "flake8 (==4.0.1)", "pytest (==7.1.1)", "pytest-cov", "pytest-django", "raven", "requests-mock", "requests_mock", "setuptools", "twine", "wheel"]
-
-[[package]]
 name = "django-storages"
 version = "1.14.6"
 description = "Support for many storage backends in Django"
@@ -6081,4 +6062,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "1b6c78278d17ca9df0dd92fcdc6e1fcdcd917e8ffaddfebbc95b432637d3ab33"
+content-hash = "72dac05e4d9b1f0488080b6e5d50e5dec6462df91e558e4ee99bf5137a96a0b4"
