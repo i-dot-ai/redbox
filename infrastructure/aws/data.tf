@@ -47,6 +47,10 @@ locals {
     "LITELLM_PROXY_API_BASE": var.litellm_proxy_api_base,
     "LITELLM_PROXY_API_KEY": var.litellm_proxy_api_key,
 
+    "SOCIAL_AUTH_OIDC_ENDPOINT": var.social_auth_oidc_endpoint,
+    "SOCIAL_AUTH_OIDC_KEY": var.social_auth_oidc_key,
+    "SOCIAL_AUTH_OIDC_SECRET": var.social_auth_oidc_secret,
+
     "DJANGO_SECRET_KEY" : var.django_secret_key,
     "POSTGRES_PASSWORD" : module.rds.rds_instance_db_password,
     "POSTGRES_HOST" : module.rds.db_instance_address,
