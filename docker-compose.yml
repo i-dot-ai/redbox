@@ -1,4 +1,18 @@
 services:
+
+  dex:
+    image: dexidp/dex:v2.37.0
+    ports:
+      - "5556:5556"
+    volumes:
+      - ./dex-config.yaml:/etc/dex/config.yaml:ro
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5556/dex/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   django-app:
     image: django-app:latest
     build:

@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 import environ
 import sentry_sdk
-from django.urls import reverse_lazy
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 from import_export.formats.base_formats import CSV
@@ -63,16 +62,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "magic_link",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
     "import_export",
     "django_q",
     "rest_framework",
     "adminplus",
     "waffle",
 ]
-
-if LOGIN_METHOD == "sso":
-    INSTALLED_APPS.append("authbroker_client")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -81,6 +80,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_permissions_policy.PermissionsPolicyMiddleware",
@@ -125,10 +125,8 @@ ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
-
-if LOGIN_METHOD == "sso":
-    AUTHENTICATION_BACKENDS.append("authbroker_client.backends.AuthbrokerBackend")
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -156,21 +154,41 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
-ACCOUNT_EMAIL_VERIFICATION = "none"
 
-if LOGIN_METHOD == "sso":
-    AUTHBROKER_URL = env.str("AUTHBROKER_URL")
-    AUTHBROKER_CLIENT_ID = env.str("AUTHBROKER_CLIENT_ID")
-    AUTHBROKER_CLIENT_SECRET = env.str("AUTHBROKER_CLIENT_SECRET")
-    LOGIN_URL = reverse_lazy("authbroker_client:login")
-    LOGIN_REDIRECT_URL = reverse_lazy("homepage")
-elif LOGIN_METHOD == "magic_link":
-    SESSION_COOKIE_SAMESITE = "Strict"
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "log-in"
-else:
-    LOGIN_REDIRECT_URL = "homepage"
-    LOGIN_URL = "log-in"
+# OAuth2 Settings
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "homepage"
+LOGOUT_REDIRECT_URL = "/"
+
+# Allauth Settings
+
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "email"
+
+
+# Social Account Settings
+SOCIALACCOUNT_ONLY = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_REQUIRED = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    "openid_connect": {
+        "APPS": [
+            {
+                "provider_id": "gds",
+                "name": "GDS Internal Access",
+                "client_id": env.str("SOCIAL_AUTH_OIDC_KEY"),
+                "secret": env.str("SOCIAL_AUTH_OIDC_SECRET"),
+                "settings": {
+                    "server_url": env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.service.security.gov.uk"),
+                    "scope": ["openid", "email", "profile"],
+                    "token_auth_method": "client_secret_post",
+                },
+            }
+        ]
+    }
+}
 
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
@@ -329,7 +347,7 @@ LOGGING = {
             "handlers": [LOG_HANDLER],
             "level": LOG_LEVEL,
             "propagate": True,
-        }
+        },
     },
 }
 
@@ -352,19 +370,6 @@ else:
     message = f"Unknown EMAIL_BACKEND_TYPE of {EMAIL_BACKEND_TYPE}"
     raise ValueError(message)
 
-# Magic link
-
-MAGIC_LINK = {
-    # link expiry, in seconds
-    "DEFAULT_EXPIRY": 300,
-    # default link redirect
-    "DEFAULT_REDIRECT": "/",
-    # the preferred authorization backend to use, in the case where you have more
-    # than one specified in the `settings.AUTHORIZATION_BACKENDS` setting.
-    "AUTHENTICATION_BACKEND": "django.contrib.auth.backends.ModelBackend",
-    # SESSION_COOKIE_AGE override for magic-link logins - in seconds (default is 1 week)
-    "SESSION_EXPIRY": 21 * 60 * 60,
-}
 
 IMPORT_FORMATS = [CSV]
 

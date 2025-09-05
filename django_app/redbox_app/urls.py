@@ -4,7 +4,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
-from magic_link import urls as magic_link_urls
 from rest_framework import routers
 
 from redbox_app.redbox_core import views
@@ -15,23 +14,15 @@ admin.site = AdminSitePlus()
 admin.autodiscover()
 
 auth_urlpatterns = [
-    path("magic_link/", include(magic_link_urls)),
-    path("log-in/", views.sign_in_view, name="log-in"),
+    path("accounts/", include("allauth.urls")),
+    path("log-in/", RedirectView.as_view(url="/accounts/oidc/gds/login/?process=login"), name="log-in"),
     path("sign-in/", RedirectView.as_view(url="/log-in/")),
-    path(
-        "log-in-link-sent/",
-        views.sign_in_link_sent_view,
-        name="log-in-link-sent",
-    ),
     path("logged-out/", views.signed_out_view, name="logged-out"),
     path("sign-up-page-1", views.Signup1.as_view(), name="sign-up-page-1"),
     path("sign-up-page-2", views.Signup2.as_view(), name="sign-up-page-2"),
     path("sign-up-page-3", views.Signup3.as_view(), name="sign-up-page-3"),
     path("sign-up-page-4", views.Signup4.as_view(), name="sign-up-page-4"),
 ]
-
-if settings.LOGIN_METHOD == "sso":
-    auth_urlpatterns.append(path("auth/", include("authbroker_client.urls")))
 
 info_urlpatterns = [
     path("privacy-notice/", views.info_views.privacy_notice_view, name="privacy-notice"),

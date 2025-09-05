@@ -263,3 +263,22 @@ variable "litellm_proxy_api_base" {
   sensitive = true
   description = "LITELLM_PROXY_API_BASE"
 }
+
+variable "social_auth_oidc_endpoint" {
+  type = string
+  default = "https://sso.service.security.gov.uk"
+  description = "SOCIAL_AUTH_OIDC_ENDPOINT"
+}
+
+variable "social_auth_oidc_key" {
+  type = string
+  sensitive = true
+  description = "SOCIAL_AUTH_OIDC_KEY"
+}
+
+variable "social_auth_oidc_secret" {
+  type = string
+  sensitive = true
+  description = "SOCIAL_AUTH_OIDC_SECRET"
+}
+

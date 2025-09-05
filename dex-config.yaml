@@ -1,0 +1,22 @@
+issuer: http://localhost:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+
+staticClients:
+- id: redbox-local
+  redirectURIs:
+  - 'http://localhost:8000/accounts/oidc/gds/login/callback/'
+  - 'http://127.0.0.1:8000/accounts/oidc/gds/login/callback/'
+  name: 'Redbox Local'
+  secret: local-secret
+
+enablePasswordDB: true
+staticPasswords:
+- email: "test@gov.uk"
+  hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  username: "testuser"
+  userID: "test-user-id"

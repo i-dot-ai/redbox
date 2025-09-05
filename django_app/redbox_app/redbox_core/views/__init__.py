@@ -1,5 +1,5 @@
 from redbox_app.redbox_core.views.api_views import ChatMessageView
-from redbox_app.redbox_core.views.auth_views import sign_in_link_sent_view, sign_in_view, signed_out_view
+from redbox_app.redbox_core.views.auth_views import signed_out_view
 from redbox_app.redbox_core.views.chat_views import (
     ChatsView,
     ChatsViewNew,
@@ -50,8 +50,6 @@ __all__ = [
     "support_view",
     "faqs_view",
     "cookies_view",
-    "sign_in_view",
-    "sign_in_link_sent_view",
     "signed_out_view",
     "Signup1",
     "Signup2",
