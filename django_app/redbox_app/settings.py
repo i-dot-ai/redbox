@@ -341,16 +341,6 @@ LOGGING = {
             "level": LOG_LEVEL,
             "propagate": True,
         },
-        "allauth": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "allauth.socialaccount": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
     },
 }
 
