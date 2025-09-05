@@ -162,10 +162,15 @@ LOGOUT_REDIRECT_URL = "/"
 
 # Allauth Settings
 ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ["email"]
 
 # Social Account Settings
 SOCIALACCOUNT_ONLY = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -179,6 +184,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 "settings": {
                     "server_url": env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.service.security.gov.uk"),
                     "scope": ["openid", "email", "profile"],
+                    "token_auth_method": "client_secret_post",
                 },
             }
         ]
