@@ -14,8 +14,8 @@ admin.site = AdminSitePlus()
 admin.autodiscover()
 
 auth_urlpatterns = [
-    path("auth/", include("social_django.urls", namespace="social")),
-    path("log-in/", RedirectView.as_view(url="/auth/login/oidc/"), name="log-in"),
+    path("accounts/", include("allauth.urls")),
+    path("log-in/", RedirectView.as_view(url="/accounts/oidc/gds/login/?process=login"), name="log-in"),
     path("sign-in/", RedirectView.as_view(url="/log-in/")),
     path("logged-out/", views.signed_out_view, name="logged-out"),
     path("sign-up-page-1", views.Signup1.as_view(), name="sign-up-page-1"),

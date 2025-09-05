@@ -9,8 +9,8 @@ web:
 staticClients:
 - id: redbox-local
   redirectURIs:
-  - 'http://localhost:8000/auth/complete/oidc/'
-  - 'http://127.0.0.1:8000/auth/complete/oidc/'
+  - 'http://localhost:8000/accounts/oidc/gds/login/callback/'
+  - 'http://127.0.0.1:8000/accounts/oidc/gds/login/callback/'
   name: 'Redbox Local'
   secret: local-secret
 

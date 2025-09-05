@@ -21,4 +21,4 @@ def test_sign_in_view_redirect_to_sign_in(alice: User, client: Client):
 
     # Then
     assert response.status_code == HTTPStatus.FOUND
-    assert response.url == "/auth/login/oidc/"
+    assert response.url == "/accounts/oidc/gds/login/"

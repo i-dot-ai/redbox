@@ -62,7 +62,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "single_session",
     "storages",
-    "social_django",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
     "import_export",
     "django_q",
     "rest_framework",
@@ -77,6 +80,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_permissions_policy.PermissionsPolicyMiddleware",
@@ -111,8 +115,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "social_django.context_processors.backends",
-                "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -122,8 +124,8 @@ WSGI_APPLICATION = "redbox_app.wsgi.application"
 ASGI_APPLICATION = "redbox_app.asgi.application"
 
 AUTHENTICATION_BACKENDS = [
-    "social_core.backends.open_id_connect.OpenIdConnectAuth",
     "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -152,32 +154,36 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 AUTH_USER_MODEL = "redbox_core.User"
-ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # OAuth2 Settings
-LOGIN_URL = "/log-in/"
+LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "homepage"
 LOGOUT_REDIRECT_URL = "/"
 
-# Social Auth Settings
-SOCIAL_AUTH_OIDC_ENDPOINT = env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.service.security.gov.uk")
-SOCIAL_AUTH_OIDC_KEY = env.str("SOCIAL_AUTH_OIDC_KEY")
-SOCIAL_AUTH_OIDC_SECRET = env.str("SOCIAL_AUTH_OIDC_SECRET")
-SOCIAL_AUTH_OIDC_SCOPE = ["openid", "email", "profile"]
-SOCIAL_AUTH_URL_NAMESPACE = "social"
-SOCIAL_AUTH_FIELDS_STORED_IN_SESSION = ["state"]
+# Allauth Settings
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
-# User creation settings
-SOCIAL_AUTH_USER_FIELDS = ["email"]
-SOCIAL_AUTH_OIDC_USER_FIELDS = ["email"]
-SOCIAL_AUTH_CREATE_USERS = True
-SOCIAL_AUTH_UPDATE_USER_DATA = True
+# Social Account Settings
+SOCIALACCOUNT_ONLY = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
-# Disable state verification for local development with Dex
-if ENVIRONMENT.is_local:
-    SOCIAL_AUTH_OIDC_IGNORE_DEFAULT_SCOPE = True
-    SOCIAL_AUTH_OIDC_STATE = False
-    # SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
+SOCIALACCOUNT_PROVIDERS = {
+    "openid_connect": {
+        "APPS": [
+            {
+                "provider_id": "gds",
+                "name": "GDS Internal Access",
+                "client_id": env.str("SOCIAL_AUTH_OIDC_KEY"),
+                "secret": env.str("SOCIAL_AUTH_OIDC_SECRET"),
+                "settings": {
+                    "server_url": env.str("SOCIAL_AUTH_OIDC_ENDPOINT", "https://sso.service.security.gov.uk"),
+                    "scope": ["openid", "email", "profile"],
+                },
+            }
+        ]
+    }
+}
+
 
 # Session settings (keep existing 21-hour session)
 SESSION_COOKIE_SAMESITE = "Strict"
@@ -339,7 +345,17 @@ LOGGING = {
             "handlers": [LOG_HANDLER],
             "level": LOG_LEVEL,
             "propagate": True,
-        }
+        },
+        "allauth": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "allauth.socialaccount": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 

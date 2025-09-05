@@ -42,7 +42,7 @@ django-adminplus = "^0.6"
 django-waffle = "^4.1.0"
 markitdown = "^0.0.1a3"
 elasticsearch = "^8.17.1"
-social-auth-app-django = "^5.5.1"
+django-allauth = {extras = ["socialaccount"], version = "^65.11.1"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

@@ -1473,6 +1473,33 @@ files = [
 ]
 
 [[package]]
+name = "django-allauth"
+version = "65.11.1"
+description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "django_allauth-65.11.1.tar.gz", hash = "sha256:e95d5234cccaf92273d315e1393cc4626cb88a19d66a1bf0e81f89f7958cfa06"},
+]
+
+[package.dependencies]
+asgiref = ">=3.8.1"
+Django = ">=4.2.16"
+oauthlib = {version = ">=3.3.0,<4", optional = true, markers = "extra == \"socialaccount\""}
+pyjwt = {version = ">=2.0,<3", extras = ["crypto"], optional = true, markers = "extra == \"socialaccount\""}
+requests = {version = ">=2.0.0,<3", optional = true, markers = "extra == \"socialaccount\""}
+
+[package.extras]
+headless-spec = ["PyYAML (>=6,<7)"]
+idp-oidc = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)"]
+mfa = ["fido2 (>=1.1.2,<3)", "qrcode (>=7.0.0,<9)"]
+openid = ["python3-openid (>=3.0.8,<4)"]
+saml = ["python3-saml (>=1.15.0,<2.0.0)"]
+socialaccount = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)", "requests (>=2.0.0,<3)"]
+steam = ["python3-openid (>=3.0.8,<4)"]
+
+[[package]]
 name = "django-appconf"
 version = "1.1.0"
 description = "A helper class for handling configuration defaults of packaged apps gracefully."
@@ -4396,25 +4423,6 @@ typing-extensions = ">=4.9.0"
 XlsxWriter = ">=0.5.7"
 
 [[package]]
-name = "python3-openid"
-version = "3.2.0"
-description = "OpenID support for modern servers and consumers."
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "python3-openid-3.2.0.tar.gz", hash = "sha256:33fbf6928f401e0b790151ed2b5290b02545e8775f982485205a066f874aaeaf"},
-    {file = "python3_openid-3.2.0-py3-none-any.whl", hash = "sha256:6626f771e0417486701e0b4daff762e7212e820ca5b29fcc0d05f6f8736dfa6b"},
-]
-
-[package.dependencies]
-defusedxml = "*"
-
-[package.extras]
-mysql = ["mysql-connector-python"]
-postgresql = ["psycopg2"]
-
-[[package]]
 name = "pytz"
 version = "2024.2"
 description = "World timezone definitions, modern and historical"
@@ -4707,25 +4715,6 @@ requests = ">=2.22,<3"
 fixture = ["fixtures"]
 
 [[package]]
-name = "requests-oauthlib"
-version = "2.0.0"
-description = "OAuthlib authentication support for Requests."
-optional = false
-python-versions = ">=3.4"
-groups = ["main"]
-files = [
-    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
-    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
-]
-
-[package.dependencies]
-oauthlib = ">=3.0.0"
-requests = ">=2.0.0"
-
-[package.extras]
-rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
-
-[[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
 description = "A utility belt for advanced users of python-requests"
@@ -4989,56 +4978,6 @@ files = [
     {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
 ]
-
-[[package]]
-name = "social-auth-app-django"
-version = "5.5.1"
-description = "Python Social Authentication, Django integration."
-optional = false
-python-versions = ">=3.10"
-groups = ["main"]
-files = [
-    {file = "social_auth_app_django-5.5.1-py3-none-any.whl", hash = "sha256:7a6aac52686b9703af57ad1f5935c55fb97404988067e94c4fa32143bc6a02a5"},
-    {file = "social_auth_app_django-5.5.1.tar.gz", hash = "sha256:a1435c17227d07d690b06cca54ea47d4ed939de4749dac45dd4393c8a98dac17"},
-]
-
-[package.dependencies]
-Django = ">=5.1"
-social-auth-core = ">=4.4,<5.0"
-
-[package.extras]
-dev = ["coverage (>=3.6)", "django-stubs (==5.2.1)", "django-stubs-ext (==5.2.1)", "mypy (==1.16.1)", "pre-commit", "pyright (==1.1.402)", "tox"]
-
-[[package]]
-name = "social-auth-core"
-version = "4.7.0"
-description = "Python social authentication made simple."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "social_auth_core-4.7.0-py3-none-any.whl", hash = "sha256:9eef9b49c332d1a3265b37dcc698a7ace97c3fc59df2d874b51576d11d31f6a6"},
-    {file = "social_auth_core-4.7.0.tar.gz", hash = "sha256:2bba127c7b7166a81085ddb0c248d93751b3bc3cdab8569f62d9f70c6bc4ed40"},
-]
-
-[package.dependencies]
-cryptography = ">=1.4"
-defusedxml = ">=0.5.0"
-oauthlib = ">=1.0.3"
-PyJWT = ">=2.7.0"
-python3-openid = ">=3.0.10"
-requests = ">=2.9.1"
-requests-oauthlib = ">=0.6.1"
-
-[package.extras]
-all = ["social-auth-core[azuread]", "social-auth-core[google-onetap]", "social-auth-core[saml]", "social-auth-core[shopify]"]
-allpy3 = ["social-auth-core[all]"]
-azuread = ["cryptography (>=2.1.1)"]
-dev = ["coverage (>=3.6)", "flake8 (>=5.0.4)", "google-auth-stubs (==0.3.0)", "mypy (==1.16.1)", "pyright (==1.1.402)", "pytest (>=4.5)", "pytest-cov (>=2.7.1)", "pytest-xdist (>=3.6.1)", "responses (==0.25.7)", "types-defusedxml (==0.7.0.20250516)", "types-oauthlib (==3.3.0.20250622)", "types-python-jose (==3.5.0.20250531)", "types-requests (==2.32.4.20250611)", "types-requests-oauthlib (==2.0.0.20250516)"]
-google-onetap = ["google-auth (>=2.40.0,<2.41.0)"]
-ping = ["python-jose (>=3.4.0,<4.0)"]
-saml = ["python3-saml (>=1.5.0)"]
-shopify = ["ShopifyAPI"]
 
 [[package]]
 name = "soupsieve"
@@ -6062,4 +6001,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "72dac05e4d9b1f0488080b6e5d50e5dec6462df91e558e4ee99bf5137a96a0b4"
+content-hash = "296e40ca01aa1d50a3fec965bfd5ec3dc19597ce98101c4b76e4daccd38c0e1b"
