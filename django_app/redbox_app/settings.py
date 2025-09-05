@@ -184,11 +184,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-
-# Session settings (keep existing 21-hour session)
-SESSION_COOKIE_SAMESITE = "Strict"
-SESSION_COOKIE_AGE = 21 * 60 * 60
-
 # CSP settings https://content-security-policy.com/
 # https://django-csp.readthedocs.io/
 CSP_DEFAULT_SRC = (
