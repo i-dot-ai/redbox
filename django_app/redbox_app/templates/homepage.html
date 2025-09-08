@@ -21,13 +21,13 @@
                 <div class="rb-banner__links govuk-!-margin-top-9">
                     {% if not request.user.is_authenticated %}
                         {{ govukButton(
-                            text="Log in",
+                            text="Sign in with Internal-Access",
                             href=url('log-in'),
                             classes="govuk-button govuk-!-margin-bottom-0 rb-banner__button"
                         ) }}
-                        {% if allow_sign_ups %}
-                            <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="{{ url('sign-up-page-1') }}">sign up</a> to Redbox</span>
-                        {% endif %}
+<!--                        {% if allow_sign_ups %}-->
+<!--                            <span class="govuk-body govuk-!-margin-bottom-0">or <a class="govuk-link" href="{{ url('sign-up-page-1') }}">sign up</a> to Redbox</span>-->
+<!--                        {% endif %}-->
                     {% else %}
                         {{ govukButton(
                             text="Start chat",
@@ -36,7 +36,7 @@
                         ) }}
                     {% endif %}
                 </div>
-                
+
             </div>
         </div>
     </div>
