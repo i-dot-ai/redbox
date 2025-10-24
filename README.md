@@ -3,8 +3,7 @@
 # 📮 Redbox
 
 > [!IMPORTANT]
-> Incubation Project: This project is an incubation project; as such, we DON’T recommend using it in any critical use case. This project is in active development and a work in progress. This project may one day Graduate, in which case this disclaimer will be removed.
-
+> This project is ending, we will stop running this as a service at the end of 2025 and this repo will be archived shortly after, please see [5-key-lessons](https://ai.gov.uk/blogs/redbox-reflections-5-key-lessons-from-building-and-sunsetting-our-government-ai-chatbot/) to understand why. 
 
 Redbox is an app that uses GenAI to chat with and summarise civil service documents. It's designed to handle a variety of administrative sources, such as letters, briefings, minutes, and speech transcripts.
 
