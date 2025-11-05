@@ -25,7 +25,7 @@ moto = {extras = ["s3"], version = "^5.0.10"}
 ipykernel = "^6.29.5"
 pandas = "^2.2.2"
 dj-notebook = "^0.7.0"
-django = "^5.0.7"
+django = "^5.1.13"
 jsonlines = "^4.0.0"
 
 [build-system]
