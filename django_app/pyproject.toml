@@ -8,7 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 redbox = {path="../redbox-core", develop=true}
-django = "^5.1"
+django = "^5.2"
 django-libsass = "^0.9"
 whitenoise = "^6.6.0"
 watchdog = {extras = ["watchmedo"], version = "^4.0.2"}
